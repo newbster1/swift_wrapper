@@ -7,31 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1A2B3C4D5E6F7890123456789ABCDEF0 /* UnisightSampleAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEF1 /* UnisightSampleAppApp.swift */; };
-		1A2B3C4D5E6F7890123456789ABCDEF2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEF3 /* ContentView.swift */; };
-		1A2B3C4D5E6F7890123456789ABCDEF4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEF5 /* Assets.xcassets */; };
-		1A2B3C4D5E6F7890123456789ABCDEF6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEF7 /* Preview Assets.xcassets */; };
-		1A2B3C4D5E6F7890123456789ABCDEF8 /* ProductListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEF9 /* ProductListView.swift */; };
-		1A2B3C4D5E6F7890123456789ABCDEFA /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEFB /* ProductDetailView.swift */; };
-		1A2B3C4D5E6F7890123456789ABCDEFC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEFD /* SettingsView.swift */; };
-		1A2B3C4D5E6F7890123456789ABCDEFE /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D5E6F7890123456789ABCDEFF /* TelemetryService.swift */; };
+		01A65CBCAF724E69B5B4D923030DF23E /* UnisightSampleAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82EC9A280C1F4105A2D96D8370EE776D /* UnisightSampleAppApp.swift */; };
+		66534A1A29264833B4CF20DC64FE394F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CBCA76BDE3C49FAA97EC4FB6D719D79 /* ContentView.swift */; };
+		13D81662EA53480FBEE13D04B5F5580F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B757AD4E1D6D4F058938F08711CCC206 /* Assets.xcassets */; };
+		4B80451640E343ACAEAF8A2BB9A4F005 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F9E4C543C192439186FEF14A1AAE5914 /* Preview Assets.xcassets */; };
+		711D477DF9A54ED0AC4E62780FD81593 /* ProductListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 227053325AA34C9F936109B964ECF211 /* ProductListView.swift */; };
+		DDAA270FC7B14C339AFC71951677FC1D /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F3AB90F00E34539B8279726FF16CD78 /* ProductDetailView.swift */; };
+		A717F9648FB54D2E9B0DE33439190A2F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E658535C959045D9A526C89D0A92245F /* SettingsView.swift */; };
+		D7ED06E09CED46D686C8604A3F4E55A1 /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3FD335BA174A08906246D3D6AE6AE7 /* TelemetryService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1A2B3C4D5E6F7890123456789ABCDEF0 /* UnisightSampleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UnisightSampleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1A2B3C4D5E6F7890123456789ABCDEF1 /* UnisightSampleAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnisightSampleAppApp.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEF3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEF5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEF7 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEF9 /* ProductListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListView.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEFB /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEFD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDEFF /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
-		1A2B3C4D5E6F7890123456789ABCDE00 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		01A65CBCAF724E69B5B4D923030DF23E /* UnisightSampleApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UnisightSampleApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		82EC9A280C1F4105A2D96D8370EE776D /* UnisightSampleAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnisightSampleAppApp.swift; sourceTree = "<group>"; };
+		4CBCA76BDE3C49FAA97EC4FB6D719D79 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B757AD4E1D6D4F058938F08711CCC206 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F9E4C543C192439186FEF14A1AAE5914 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		227053325AA34C9F936109B964ECF211 /* ProductListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductListView.swift; sourceTree = "<group>"; };
+		6F3AB90F00E34539B8279726FF16CD78 /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
+		E658535C959045D9A526C89D0A92245F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FC3FD335BA174A08906246D3D6AE6AE7 /* TelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryService.swift; sourceTree = "<group>"; };
+		D62E717EEA20438E8EF4E810D7F2E803 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		1A2B3C4D5E6F7890123456789ABCDEEF /* Frameworks */ = {
+		C4613989806F4CF2AD8841D8CCB7B5B9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -41,42 +41,42 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1A2B3C4D5E6F7890123456789ABCDEE0 = {
+		37C6172C25E44CF2B5CCE304AB8FE184 = {
 			isa = PBXGroup;
 			children = (
-				1A2B3C4D5E6F7890123456789ABCDEE1 /* UnisightSampleApp */,
-				1A2B3C4D5E6F7890123456789ABCDEE2 /* Products */,
+				2D01DC6ACF1A418E9E0ACE0223EA6077 /* UnisightSampleApp */,
+				96C369C9AAAC41A6AAA3EC2ED083FE80 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE1 /* UnisightSampleApp */ = {
+		2D01DC6ACF1A418E9E0ACE0223EA6077 /* UnisightSampleApp */ = {
 			isa = PBXGroup;
 			children = (
-				1A2B3C4D5E6F7890123456789ABCDEF1 /* UnisightSampleAppApp.swift */,
-				1A2B3C4D5E6F7890123456789ABCDEF3 /* ContentView.swift */,
-				1A2B3C4D5E6F7890123456789ABCDEF9 /* ProductListView.swift */,
-				1A2B3C4D5E6F7890123456789ABCDEFB /* ProductDetailView.swift */,
-				1A2B3C4D5E6F7890123456789ABCDEFD /* SettingsView.swift */,
-				1A2B3C4D5E6F7890123456789ABCDEFF /* TelemetryService.swift */,
-				1A2B3C4D5E6F7890123456789ABCDEF5 /* Assets.xcassets */,
-				1A2B3C4D5E6F7890123456789ABCDE00 /* Info.plist */,
-				1A2B3C4D5E6F7890123456789ABCDEE3 /* Preview Content */,
+				82EC9A280C1F4105A2D96D8370EE776D /* UnisightSampleAppApp.swift */,
+				4CBCA76BDE3C49FAA97EC4FB6D719D79 /* ContentView.swift */,
+				227053325AA34C9F936109B964ECF211 /* ProductListView.swift */,
+				6F3AB90F00E34539B8279726FF16CD78 /* ProductDetailView.swift */,
+				E658535C959045D9A526C89D0A92245F /* SettingsView.swift */,
+				FC3FD335BA174A08906246D3D6AE6AE7 /* TelemetryService.swift */,
+				B757AD4E1D6D4F058938F08711CCC206 /* Assets.xcassets */,
+				D62E717EEA20438E8EF4E810D7F2E803 /* Info.plist */,
+				AE61AB27F87C41B6AE61B1C8379488E6 /* Preview Content */,
 			);
 			path = UnisightSampleApp;
 			sourceTree = "<group>";
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE2 /* Products */ = {
+		96C369C9AAAC41A6AAA3EC2ED083FE80 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1A2B3C4D5E6F7890123456789ABCDEF0 /* UnisightSampleApp.app */,
+				01A65CBCAF724E69B5B4D923030DF23E /* UnisightSampleApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE3 /* Preview Content */ = {
+		AE61AB27F87C41B6AE61B1C8379488E6 /* Preview Content */ = {
 			isa = PBXGroup;
 			children = (
-				1A2B3C4D5E6F7890123456789ABCDEF7 /* Preview Assets.xcassets */,
+				F9E4C543C192439186FEF14A1AAE5914 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
 			sourceTree = "<group>";
@@ -84,13 +84,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1A2B3C4D5E6F7890123456789ABCDEEE /* UnisightSampleApp */ = {
+		8B11726C31F54F4198373249459DEC1F /* UnisightSampleApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1A2B3C4D5E6F7890123456789ABCDEE4 /* Build configuration list for PBXNativeTarget "UnisightSampleApp" */;
+			buildConfigurationList = E9D88E320C174D9188B088A7E5C085EF /* Build configuration list for PBXNativeTarget "UnisightSampleApp" */;
 			buildPhases = (
-				1A2B3C4D5E6F7890123456789ABCDEEB /* Sources */,
-				1A2B3C4D5E6F7890123456789ABCDEEF /* Frameworks */,
-				1A2B3C4D5E6F7890123456789ABCDEED /* Resources */,
+				939B400CEE7B4DCA887182E49AE0E53C /* Sources */,
+				C4613989806F4CF2AD8841D8CCB7B5B9 /* Frameworks */,
+				12C5DA207E5B411FAFAA351466A2AFDD /* Resources */,
 			);
 			buildRules = (
 			);
@@ -100,25 +100,25 @@
 			packageProductDependencies = (
 			);
 			productName = UnisightSampleApp;
-			productReference = 1A2B3C4D5E6F7890123456789ABCDEF0 /* UnisightSampleApp.app */;
+			productReference = 01A65CBCAF724E69B5B4D923030DF23E /* UnisightSampleApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		1A2B3C4D5E6F7890123456789ABCDEE9 /* Project object */ = {
+		1F1E7896731E47439F4A90D6DDAD4FF6 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					1A2B3C4D5E6F7890123456789ABCDEEE = {
+					8B11726C31F54F4198373249459DEC1F = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
-			buildConfigurationList = 1A2B3C4D5E6F7890123456789ABCDEEC /* Build configuration list for PBXProject "UnisightSampleApp" */;
+			buildConfigurationList = D8BAA7CE6592467688E8EF3687F3588A /* Build configuration list for PBXProject "UnisightSampleApp" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -126,46 +126,46 @@
 				en,
 				Base,
 			);
-			mainGroup = 1A2B3C4D5E6F7890123456789ABCDEE0;
-			productRefGroup = 1A2B3C4D5E6F7890123456789ABCDEE2 /* Products */;
+			mainGroup = 37C6172C25E44CF2B5CCE304AB8FE184;
+			productRefGroup = 96C369C9AAAC41A6AAA3EC2ED083FE80 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1A2B3C4D5E6F7890123456789ABCDEEE /* UnisightSampleApp */,
+				8B11726C31F54F4198373249459DEC1F /* UnisightSampleApp */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		1A2B3C4D5E6F7890123456789ABCDEED /* Resources */ = {
+		12C5DA207E5B411FAFAA351466A2AFDD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1A2B3C4D5E6F7890123456789ABCDEF6 /* Preview Assets.xcassets in Resources */,
-				1A2B3C4D5E6F7890123456789ABCDEF4 /* Assets.xcassets in Resources */,
+				4B80451640E343ACAEAF8A2BB9A4F005 /* Preview Assets.xcassets in Resources */,
+				13D81662EA53480FBEE13D04B5F5580F /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1A2B3C4D5E6F7890123456789ABCDEEB /* Sources */ = {
+		939B400CEE7B4DCA887182E49AE0E53C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1A2B3C4D5E6F7890123456789ABCDEF2 /* ContentView.swift in Sources */,
-				1A2B3C4D5E6F7890123456789ABCDEF8 /* ProductListView.swift in Sources */,
-				1A2B3C4D5E6F7890123456789ABCDEFA /* ProductDetailView.swift in Sources */,
-				1A2B3C4D5E6F7890123456789ABCDEFC /* SettingsView.swift in Sources */,
-				1A2B3C4D5E6F7890123456789ABCDEFE /* TelemetryService.swift in Sources */,
-				1A2B3C4D5E6F7890123456789ABCDEF0 /* UnisightSampleAppApp.swift in Sources */,
+				66534A1A29264833B4CF20DC64FE394F /* ContentView.swift in Sources */,
+				711D477DF9A54ED0AC4E62780FD81593 /* ProductListView.swift in Sources */,
+				DDAA270FC7B14C339AFC71951677FC1D /* ProductDetailView.swift in Sources */,
+				A717F9648FB54D2E9B0DE33439190A2F /* SettingsView.swift in Sources */,
+				D7ED06E09CED46D686C8604A3F4E55A1 /* TelemetryService.swift in Sources */,
+				01A65CBCAF724E69B5B4D923030DF23E /* UnisightSampleAppApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		1A2B3C4D5E6F7890123456789ABCDEE5 /* Debug */ = {
+		C876F004F5AB464D8EAF9DA759DD5FE7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -228,7 +228,7 @@
 			};
 			name = Debug;
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE6 /* Release */ = {
+		4B79616AC59F4A4DAB2A301C36392088 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -284,7 +284,7 @@
 			};
 			name = Release;
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE7 /* Debug */ = {
+		49E089BC05674E8EA33B1B1239209969 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -315,7 +315,7 @@
 			};
 			name = Debug;
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE8 /* Release */ = {
+		CC0FBAAE5A734869ADD1FAEE0762C5A1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -349,25 +349,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1A2B3C4D5E6F7890123456789ABCDEEC /* Build configuration list for PBXProject "UnisightSampleApp" */ = {
+		D8BAA7CE6592467688E8EF3687F3588A /* Build configuration list for PBXProject "UnisightSampleApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1A2B3C4D5E6F7890123456789ABCDEE5 /* Debug */,
-				1A2B3C4D5E6F7890123456789ABCDEE6 /* Release */,
+				C876F004F5AB464D8EAF9DA759DD5FE7 /* Debug */,
+				4B79616AC59F4A4DAB2A301C36392088 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1A2B3C4D5E6F7890123456789ABCDEE4 /* Build configuration list for PBXNativeTarget "UnisightSampleApp" */ = {
+		E9D88E320C174D9188B088A7E5C085EF /* Build configuration list for PBXNativeTarget "UnisightSampleApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1A2B3C4D5E6F7890123456789ABCDEE7 /* Debug */,
-				1A2B3C4D5E6F7890123456789ABCDEE8 /* Release */,
+				49E089BC05674E8EA33B1B1239209969 /* Debug */,
+				CC0FBAAE5A734869ADD1FAEE0762C5A1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 1A2B3C4D5E6F7890123456789ABCDEE9 /* Project object */;
+	rootObject = 1F1E7896731E47439F4A90D6DDAD4FF6 /* Project object */;
 }
