@@ -297,6 +297,26 @@ rm -rf .build
 rm -rf *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
 ```
 
+### 11. ProductListView.swift (Sample App)
+**Issues Fixed:**
+- **UserEventType Reference**: Fixed `.pan` to `.swipe(.left)` to match enum definition
+
+**Changes:**
+```swift
+// Fixed UserEventType reference
+// Before: Non-existent enum case
+TelemetryService.shared.logUserInteraction(
+    .pan,  // ❌ Reference to member 'pan' cannot be resolved
+    viewName: "ProductList"
+)
+
+// After: Correct enum case
+TelemetryService.shared.logUserInteraction(
+    .swipe(.left),  // ✅ Correct UserEventType enum case
+    viewName: "ProductList"
+)
+```
+
 ## 🏗️ Architecture Improvements
 
 ### OpenTelemetry Integration
