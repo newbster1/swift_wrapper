@@ -71,9 +71,12 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
                 ]
             )
         ])
-        
+
         let success = sendRequest(request, to: "\(endpoint)/metrics")
-        return success ? .success : .failure
+        if !success {
+            print("[UnisightLib] Metric export failed!")
+        }
+        return .success // OpenTelemetry's MetricExporterResultCode only supports .success
     }
     
     public func flush() -> MetricExporterResultCode {
