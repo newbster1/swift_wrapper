@@ -109,6 +109,33 @@ public enum UserEventType: Hashable {
     case pinch
     case rotation
     case custom(String)
+    
+    var eventName: String {
+        switch self {
+        case .tap:
+            return "tap"
+        case .doubleTap:
+            return "double_tap"
+        case .longPress:
+            return "long_press"
+        case .swipe(let direction):
+            return "swipe_\(direction.rawValue)"
+        case .selection:
+            return "selection"
+        case .entry:
+            return "entry"
+        case .exit:
+            return "exit"
+        case .scroll:
+            return "scroll"
+        case .pinch:
+            return "pinch"
+        case .rotation:
+            return "rotation"
+        case .custom(let name):
+            return name
+        }
+    }
 }
 
 public enum SwipeDirection: String, CaseIterable {
@@ -180,6 +207,27 @@ public enum SystemEventType: Hashable {
     case networkChange
     case accessibilityChange
     case custom(String)
+    
+    var eventName: String {
+        switch self {
+        case .foreground:
+            return "foreground"
+        case .background:
+            return "background"
+        case .terminate:
+            return "terminate"
+        case .memoryWarning:
+            return "memory_warning"
+        case .battery:
+            return "battery"
+        case .networkChange:
+            return "network_change"
+        case .accessibilityChange:
+            return "accessibility_change"
+        case .custom(let name):
+            return name
+        }
+    }
 }
 
 // MARK: - Configuration Enums
@@ -203,12 +251,3 @@ public enum EventProcessing: String, CaseIterable {
     case batch = "batch"
 }
 
-// MARK: - Event Categories
-
-public enum EventCategory: String, CaseIterable {
-    case user
-    case navigation
-    case system
-    case functional
-    case custom
-}

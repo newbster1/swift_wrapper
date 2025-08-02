@@ -241,7 +241,7 @@ public extension UnisightTelemetry {
         }
         
         logEvent(
-            name: "system_\(event)",
+            name: "system_\(event.eventName)",
             category: .system,
             attributes: eventAttributes
         )

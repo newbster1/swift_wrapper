@@ -39,6 +39,26 @@
 - **Solution**: Updated system event references to use correct enum values
 - **Status**: ✅ FIXED
 
+### 7. TelemetryEvent Codable Conformance
+- **Problem**: `TelemetryEvent` does not conform to `Encodable`/`Decodable`
+- **Solution**: Added custom `init(from decoder:)` and `encode(to encoder:)` methods
+- **Status**: ✅ FIXED
+
+### 8. Missing Properties in Utility Classes
+- **Problem**: Missing properties in `AppStateManager` and `InstallationManager`
+- **Solution**: Added missing properties (`lastActiveTime`, `isFirstLaunch`, `sessionCount`, `installationDate`)
+- **Status**: ✅ FIXED
+
+### 9. Missing Event Name Properties
+- **Problem**: Missing `eventName` properties in `UserEventType` and `SystemEventType`
+- **Solution**: Added `eventName` computed properties to both enums
+- **Status**: ✅ FIXED
+
+### 10. OpenTelemetry API Argument Labels
+- **Problem**: Incorrect argument labels in OpenTelemetry API calls
+- **Solution**: Fixed to use correct `instrumentationScopeName` and `instrumentationVersion` parameters
+- **Status**: ✅ FIXED
+
 ## Current Status
 
 The UnisightSampleApp should now compile successfully with full OpenTelemetry integration:
@@ -50,6 +70,10 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 5. ✅ Full OpenTelemetry integration restored
 6. ✅ Duplicate type declarations resolved
 7. ✅ System event references fixed
+8. ✅ TelemetryEvent Codable conformance fixed
+9. ✅ Missing utility properties added
+10. ✅ Event name properties added
+11. ✅ OpenTelemetry API argument labels fixed
 
 ## Key API Fixes
 
@@ -57,18 +81,20 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - **PeriodicMetricReader**: Used correct constructor with `exporter` and `exportInterval`
 - **URLSession Instrumentation**: Restored proper initialization
 - **Resource Attributes**: Used correct OpenTelemetry attribute format
-- **Instrumentation Names**: Fixed to use `instrumentationName` instead of `instrumentationScopeName`
-- **Logger API**: Removed extra `instrumentationVersion` parameter
+- **Instrumentation Names**: Fixed to use `instrumentationScopeName` and `instrumentationVersion`
+- **Codable Conformance**: Added custom encoding/decoding for TelemetryEvent
+- **Event Names**: Added computed properties for event name generation
 
 ## Files Modified
 
-- `unisight_lib/Sources/UnisightLib/UnisightLib.swift` - Removed problematic imports
+- `unisight_lib/Sources/UnisightLib/UnisightLib.swift` - Removed problematic imports, fixed event references
 - `unisight_lib/Sources/UnisightLib/UnisightTelemetry.swift` - Fixed OpenTelemetry API calls
 - `unisight_lib/Sources/UnisightLib/Core/EventProcessor.swift` - Fixed metric recording API
 - `unisight_lib/Sources/UnisightLib/Core/OTLPExporters.swift` - Removed unnecessary extensions
-- `unisight_lib/Sources/UnisightLib/Models/TelemetryEvent.swift` - Fixed type definitions
-- `unisight_lib/Sources/UnisightLib/Models/UnisightConfiguration.swift` - Fixed duplicate type declarations
+- `unisight_lib/Sources/UnisightLib/Models/TelemetryEvent.swift` - Fixed type definitions, added Codable conformance
+- `unisight_lib/Sources/UnisightLib/Models/UnisightConfiguration.swift` - Fixed duplicate type declarations, added eventName properties
 - `unisight_lib/Sources/UnisightLib/Models/EventCategory.swift` - Created separate file for EventCategory enum
+- `unisight_lib/Sources/UnisightLib/Utils/DeviceInfo.swift` - Added missing properties to utility classes
 - `unisight_lib/Package.swift` - Restored OpenTelemetry dependencies
 
 ## Notes
@@ -78,3 +104,5 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - No breaking changes to the public API
 - Proper telemetry data export to OTLP endpoints
 - Clean module structure with proper type organization
+- Complete Codable conformance for all data models
+- All utility classes have required properties

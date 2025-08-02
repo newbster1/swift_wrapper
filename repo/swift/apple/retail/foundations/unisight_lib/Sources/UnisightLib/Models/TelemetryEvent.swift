@@ -72,6 +72,23 @@ extension TelemetryEvent {
         self.previousScreen = try container.decodeIfPresent(String.self, forKey: .previousScreen)
         self.timeOnScreen = try container.decodeIfPresent(TimeInterval.self, forKey: .timeOnScreen)
     }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(category, forKey: .category)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(sessionId, forKey: .sessionId)
+        try container.encode(attributes, forKey: .attributes)
+        try container.encodeIfPresent(viewContext, forKey: .viewContext)
+        try container.encodeIfPresent(userContext, forKey: .userContext)
+        try container.encode(deviceContext, forKey: .deviceContext)
+        try container.encode(appContext, forKey: .appContext)
+        try container.encode(screenPath, forKey: .screenPath)
+        try container.encodeIfPresent(previousScreen, forKey: .previousScreen)
+        try container.encodeIfPresent(timeOnScreen, forKey: .timeOnScreen)
+    }
 }
 
 // MARK: - Context Models
