@@ -264,11 +264,12 @@ public extension View {
         } else if gestures.count == 1 {
             return self.gesture(gestures[0])
         } else {
-            return self.gesture(
-                gestures.reduce(gestures[0]) { result, gesture in
-                    AnyGesture(result.exclusively(before: gesture))
-                }
-            )
+            // Combine gestures sequentially
+            var combinedGesture = gestures[0]
+            for i in 1..<gestures.count {
+                combinedGesture = AnyGesture(combinedGesture.exclusively(before: gestures[i]))
+            }
+            return self.gesture(combinedGesture)
         }
     }
     
