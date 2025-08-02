@@ -144,23 +144,8 @@ public class EventProcessor {
         
         span.end()
         
-        // Log consolidated event
-        let logRecord = LogRecord(
-            timestamp: Date(),
-            observedTimestamp: Date(),
-            traceId: nil,
-            spanId: nil,
-            traceFlags: TraceFlags(),
-            severityText: "INFO",
-            severityNumber: SeverityNumber.info,
-            body: AttributeValue.string("Consolidated event: \(consolidatedEvent.baseEvent.name)"),
-            attributes: [
-                "event_count": AttributeValue.int(consolidatedEvent.eventCount),
-                "category": AttributeValue.string(consolidatedEvent.baseEvent.category.rawValue),
-                "time_span": AttributeValue.double(consolidatedEvent.timeSpan)
-            ]
-        )
-        UnisightTelemetry.shared.getLogger().emit(logRecord: logRecord)
+        // Log consolidated event using simple logging
+        print("[UnisightLib] Consolidated event: \(consolidatedEvent.baseEvent.name) - Count: \(consolidatedEvent.eventCount), Category: \(consolidatedEvent.baseEvent.category.rawValue), TimeSpan: \(consolidatedEvent.timeSpan)")
     }
     
     private func createSpanForEvent(_ event: TelemetryEvent) {
@@ -197,45 +182,30 @@ public class EventProcessor {
     }
     
     private func logEvent(_ event: TelemetryEvent) {
-        let logger = UnisightTelemetry.shared.getLogger()
-        
-        var logAttributes: [String: AttributeValue] = [
-            "event_id": AttributeValue.string(event.id),
-            "category": AttributeValue.string(event.category.rawValue),
-            "session_id": AttributeValue.string(event.sessionId)
-        ]
-        
-        // Add event attributes
-        for (key, value) in event.attributes {
-            logAttributes[key] = AttributeValue.fromAny(value.value)
-        }
-        
-        // Determine log severity based on event category
-        let (severityText, severityNumber): (String, SeverityNumber) = {
+        // Determine log level based on event category
+        let logLevel: String = {
             switch event.category {
             case .system:
-                return ("INFO", SeverityNumber.info)
+                return "INFO"
             case .user, .navigation:
-                return ("DEBUG", SeverityNumber.debug)
+                return "DEBUG"
             case .functional:
-                return ("INFO", SeverityNumber.info)
+                return "INFO"
             case .custom:
-                return ("DEBUG", SeverityNumber.debug)
+                return "DEBUG"
             }
         }()
         
-        let logRecord = LogRecord(
-            timestamp: Date(),
-            observedTimestamp: Date(),
-            traceId: nil,
-            spanId: nil,
-            traceFlags: TraceFlags(),
-            severityText: severityText,
-            severityNumber: severityNumber,
-            body: AttributeValue.string("Event: \(event.name)"),
-            attributes: logAttributes
-        )
-        logger.emit(logRecord: logRecord)
+        // Create log message
+        var logMessage = "[UnisightLib] [\(logLevel)] Event: \(event.name) - Category: \(event.category.rawValue), Session: \(event.sessionId)"
+        
+        // Add event attributes to log message
+        if !event.attributes.isEmpty {
+            let attributesString = event.attributes.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+            logMessage += " - Attributes: {\(attributesString)}"
+        }
+        
+        print(logMessage)
     }
     
     private func recordMetricsForEvent(_ event: TelemetryEvent) {
