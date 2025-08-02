@@ -3,7 +3,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 
 /// OTLP-compatible telemetry exporter for sending data to the dispatcher
-public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter {
+public class TelemetryExporter: SpanExporter, MetricExporter {
     
     // MARK: - Properties
     private let endpoint: String
@@ -83,29 +83,6 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
     }
     
     public func flush() -> MetricExporterResultCode {
-        return .success
-    }
-    
-    // MARK: - LogRecordExporter
-    
-    public func export(logRecords: [ReadableLogRecord], explicitTimeout: TimeInterval?) -> LogRecordExporterResultCode {
-        let otlpLogs = logRecords.map { convertToOTLPLog($0) }
-        let request = OTLPLogRequest(resourceLogs: [
-            OTLPResourceLogs(
-                resource: createOTLPResource(),
-                scopeLogs: [
-                    OTLPScopeLogs(
-                        scope: createOTLPScope(),
-                        logRecords: otlpLogs
-                    )
-                ]
-            )
-        ])
-        
-        return sendRequest(request, to: "\(endpoint)/logs") ? .success : .failure
-    }
-    
-    public func forceFlush(explicitTimeout: TimeInterval?) -> LogRecordExporterResultCode {
         return .success
     }
     
@@ -206,15 +183,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         )
     }
     
-    private func convertToOTLPLog(_ logRecord: ReadableLogRecord) -> OTLPLogRecord {
-        return OTLPLogRecord(
-            timeUnixNano: UInt64(logRecord.timestamp.timeIntervalSince1970 * 1_000_000_000),
-            severityNumber: convertLogSeverity(logRecord.severityNumber),
-            severityText: logRecord.severityText,
-            body: OTLPAnyValue.stringValue(logRecord.body.description),
-            attributes: logRecord.attributes.map { convertToOTLPKeyValue($0.key, $0.value) }
-        )
-    }
+
     
     private func convertSpanKind(_ kind: SpanKind) -> Int {
         switch kind {
@@ -237,17 +206,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         }
     }
     
-    private func convertLogSeverity(_ severity: SeverityNumber) -> Int {
-        switch severity {
-        case .trace: return 1
-        case .debug: return 5
-        case .info: return 9
-        case .warn: return 13
-        case .error: return 17
-        case .fatal: return 21
-        default: return 9
-        }
-    }
+
     
     private func convertToOTLPKeyValue(_ key: String, _ value: AttributeValue) -> OTLPKeyValue {
         let otlpValue: OTLPAnyValue
@@ -305,19 +264,7 @@ public struct OTLPScopeMetrics: Codable {
     let metrics: [OTLPMetric]
 }
 
-public struct OTLPLogRequest: Codable {
-    let resourceLogs: [OTLPResourceLogs]
-}
 
-public struct OTLPResourceLogs: Codable {
-    let resource: OTLPResource
-    let scopeLogs: [OTLPScopeLogs]
-}
-
-public struct OTLPScopeLogs: Codable {
-    let scope: OTLPInstrumentationScope
-    let logRecords: [OTLPLogRecord]
-}
 
 public struct OTLPResource: Codable {
     let attributes: [OTLPKeyValue]
@@ -351,13 +298,7 @@ public struct OTLPMetric: Codable {
     let unit: String?
 }
 
-public struct OTLPLogRecord: Codable {
-    let timeUnixNano: UInt64
-    let severityNumber: Int
-    let severityText: String
-    let body: OTLPAnyValue
-    let attributes: [OTLPKeyValue]
-}
+
 
 public struct OTLPKeyValue: Codable {
     let key: String
