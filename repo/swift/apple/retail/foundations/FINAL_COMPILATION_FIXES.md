@@ -252,6 +252,26 @@ func setUserContext(userId: String, segment: String? = nil) {
 }
 ```
 
+### 10. DeviceInfo Conflict Resolution (Sample App)
+**Issues Fixed:**
+- **DeviceInfo Scope Conflict**: Removed duplicate DeviceInfo struct from sample app that was conflicting with UnisightLib's DeviceInfo
+- **Build Cache Issues**: Resolved compilation errors caused by duplicate type definitions
+
+**Changes:**
+```swift
+// Removed duplicate DeviceInfo from sample app
+// Before: sample_app/UnisightSampleApp/DeviceInfoExtensions.swift
+struct DeviceInfo { ... }  // ❌ Duplicate definition
+
+// After: Using UnisightLib's DeviceInfo
+// UnisightLib provides: public struct DeviceInfo { ... }  // ✅ Single source of truth
+```
+
+**Resolution:**
+- Deleted `DeviceInfoExtensions.swift` from sample app
+- Sample app now uses `DeviceInfo` from UnisightLib
+- Eliminates type conflicts and build cache issues
+
 ## 🏗️ Architecture Improvements
 
 ### OpenTelemetry Integration
