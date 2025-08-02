@@ -219,58 +219,67 @@ public extension View {
         elementId: String? = nil,
         gestureTypes: [UserEventType] = [.tap, .longPress, .swipe(.left), .pinch, .rotation]
     ) -> some View {
-        var gestures: [AnyGesture] = []
+        var view = self
         
+        // Apply each gesture type individually
         if gestureTypes.contains(.tap) {
-            gestures.append(
-                AnyGesture(
-                    TapGesture()
-                        .onEnded { _ in
-                            trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
-                        }
-                )
-            )
+            view = view.onTapGesture {
+                trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
+            }
         }
         
         if gestureTypes.contains(.longPress) {
-            gestures.append(
-                AnyGesture(
-                    LongPressGesture()
-                        .onEnded { _ in
-                            trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
-                        }
-                )
-            )
+            view = view.onLongPressGesture {
+                trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
+            }
         }
         
         if gestureTypes.contains(.swipe(.left)) {
-            gestures.append(
-                AnyGesture(
-                    DragGesture()
-                        .onEnded { value in
-                            trackUserInteraction(
-                                type: .swipe(.left),
-                                viewName: viewName,
-                                elementId: elementId,
-                                coordinates: value.location
-                            )
-                        }
-                )
+            view = view.gesture(
+                DragGesture()
+                    .onEnded { value in
+                        trackUserInteraction(
+                            type: .swipe(.left),
+                            viewName: viewName,
+                            elementId: elementId,
+                            coordinates: value.location
+                        )
+                    }
             )
         }
         
-        if gestures.isEmpty {
-            return self
-        } else if gestures.count == 1 {
-            return self.gesture(gestures[0])
-        } else {
-            // Combine gestures sequentially
-            var combinedGesture = gestures[0]
-            for i in 1..<gestures.count {
-                combinedGesture = AnyGesture(combinedGesture.exclusively(before: gestures[i]))
-            }
-            return self.gesture(combinedGesture)
+        if gestureTypes.contains(.pinch) {
+            view = view.gesture(
+                MagnificationGesture()
+                    .onEnded { value in
+                        trackUserInteraction(
+                            type: .pinch,
+                            viewName: viewName,
+                            elementId: elementId,
+                            gestureProperties: ["magnification": value]
+                        )
+                    }
+            )
         }
+        
+        if gestureTypes.contains(.rotation) {
+            view = view.gesture(
+                RotationGesture()
+                    .onEnded { value in
+                        trackUserInteraction(
+                            type: .rotation,
+                            viewName: viewName,
+                            elementId: elementId,
+                            gestureProperties: [
+                                "rotation_radians": value.radians,
+                                "rotation_degrees": value.degrees
+                            ]
+                        )
+                    }
+            )
+        }
+        
+        return view
     }
     
     // MARK: - View State Tracking

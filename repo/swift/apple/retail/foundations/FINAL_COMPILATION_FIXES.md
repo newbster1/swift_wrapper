@@ -203,20 +203,25 @@ if let coordinates = coordinates {
 }
 
 // Fixed Generic Parameter Inference
-// Before: Complex reduce with AnyGesture(TapGesture().onEnded { _ in })
-// After: Simple conditional logic with proper type inference
-if gestures.isEmpty {
-    return self
-} else if gestures.count == 1 {
-    return self.gesture(gestures[0])
-} else {
-    // Combine gestures sequentially
-    var combinedGesture = gestures[0]
-    for i in 1..<gestures.count {
-        combinedGesture = AnyGesture(combinedGesture.exclusively(before: gestures[i]))
+// Before: Complex AnyGesture array and reduce operations
+// After: Simple sequential view modifier application
+var view = self
+
+// Apply each gesture type individually
+if gestureTypes.contains(.tap) {
+    view = view.onTapGesture {
+        trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
     }
-    return self.gesture(combinedGesture)
 }
+
+if gestureTypes.contains(.longPress) {
+    view = view.onLongPressGesture {
+        trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
+    }
+}
+
+// ... similar for other gesture types
+return view
 ```
 
 ## 🏗️ Architecture Improvements
