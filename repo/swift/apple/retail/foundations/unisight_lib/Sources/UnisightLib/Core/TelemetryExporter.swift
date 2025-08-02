@@ -22,14 +22,6 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         
-        // For development - bypass certificate validation
-        #if DEBUG
-        config.urlSessionDidReceiveChallenge = { session, challenge in
-            let credential = URLCredential(trust: challenge.protectionSpace.serverTrust!)
-            return (.useCredential, credential)
-        }
-        #endif
-        
         self.session = URLSession(configuration: config)
         
         // Configure JSON encoder
@@ -52,7 +44,8 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
             )
         ])
         
-        return sendRequest(request, to: "\(endpoint)/traces") ? .success : .failure
+        let success = sendRequest(request, to: "\(endpoint)/traces")
+        return success ? .success : .failure
     }
     
     public func flush(explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
@@ -79,7 +72,8 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
             )
         ])
         
-        return sendRequest(request, to: "\(endpoint)/metrics") ? .success : .failure
+        let success = sendRequest(request, to: "\(endpoint)/metrics")
+        return success ? .success : .failure
     }
     
     public func flush() -> MetricExporterResultCode {
@@ -179,7 +173,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
         return OTLPMetric(
             name: metric.name,
             description: metric.description,
-            unit: metric.unit
+            unit: nil
         )
     }
     
@@ -228,6 +222,8 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
             otlpValue = .arrayValue(OTLPArrayValue(values: array.map { .intValue(Int64($0)) }))
         case .doubleArray(let array):
             otlpValue = .arrayValue(OTLPArrayValue(values: array.map { .doubleValue($0) }))
+        @unknown default:
+            otlpValue = .stringValue(String(describing: value))
         }
         
         return OTLPKeyValue(key: key, value: otlpValue)
