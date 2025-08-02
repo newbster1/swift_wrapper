@@ -51,6 +51,29 @@ public struct TelemetryEvent: Codable {
     }
 }
 
+extension TelemetryEvent {
+    enum CodingKeys: String, CodingKey {
+        case id, name, category, timestamp, sessionId, attributes, viewContext, userContext, deviceContext, appContext, screenPath, previousScreen, timeOnScreen
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.category = try container.decode(EventCategory.self, forKey: .category)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+        self.sessionId = try container.decode(String.self, forKey: .sessionId)
+        self.attributes = try container.decode([String: AnyCodable].self, forKey: .attributes)
+        self.viewContext = try container.decodeIfPresent(ViewContext.self, forKey: .viewContext)
+        self.userContext = try container.decodeIfPresent(UserContext.self, forKey: .userContext)
+        self.deviceContext = try container.decodeIfPresent(DeviceContext.self, forKey: .deviceContext) ?? DeviceContext.current
+        self.appContext = try container.decodeIfPresent(AppContext.self, forKey: .appContext) ?? AppContext.current
+        self.screenPath = try container.decodeIfPresent([String].self, forKey: .screenPath) ?? []
+        self.previousScreen = try container.decodeIfPresent(String.self, forKey: .previousScreen)
+        self.timeOnScreen = try container.decodeIfPresent(TimeInterval.self, forKey: .timeOnScreen)
+    }
+}
+
 // MARK: - Context Models
 
 public struct ViewContext: Codable {
