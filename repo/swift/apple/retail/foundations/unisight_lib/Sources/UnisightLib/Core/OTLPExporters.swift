@@ -3,7 +3,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 
 /// OTLP Metric Exporter implementation
-public class OTLPMetricExporter: MetricExporter {
+public class OTLPMetricExporter {
     private let endpoint: String
     private let headers: [String: String]
     private let session: URLSession
@@ -117,7 +117,7 @@ public class OTLPMetricExporter: MetricExporter {
 }
 
 /// OTLP Log Exporter implementation
-public class OTLPLogExporter: LogRecordExporter {
+public class OTLPLogExporter {
     private let endpoint: String
     private let headers: [String: String]
     private let session: URLSession

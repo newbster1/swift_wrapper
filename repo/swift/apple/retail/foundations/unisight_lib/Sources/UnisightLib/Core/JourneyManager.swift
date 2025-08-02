@@ -76,7 +76,7 @@ public class JourneyManager: ObservableObject {
         // Log the transition
         UnisightTelemetry.shared.logEvent(
             name: "screen_transition",
-            category: .navigation,
+            category: EventCategory.navigation,
             attributes: [
                 "source_screen": previousScreen ?? "unknown",
                 "destination_screen": destination,
@@ -95,7 +95,7 @@ public class JourneyManager: ObservableObject {
         
         UnisightTelemetry.shared.logEvent(
             name: "screen_appeared",
-            category: .navigation,
+            category: EventCategory.navigation,
             attributes: [
                 "screen_name": screenName,
                 "screen_path": userPath.suffix(3).joined(separator: " -> ")
@@ -108,7 +108,7 @@ public class JourneyManager: ObservableObject {
         
         UnisightTelemetry.shared.logEvent(
             name: "screen_disappeared",
-            category: .navigation,
+            category: EventCategory.navigation,
             attributes: [
                 "screen_name": screenName,
                 "time_on_screen": timeOnScreen,
@@ -177,7 +177,7 @@ public class JourneyManager: ObservableObject {
     private func logSessionEvent(_ event: SessionEvent) {
         UnisightTelemetry.shared.logEvent(
             name: "session_\(event.rawValue)",
-            category: .system,
+            category: EventCategory.system,
             attributes: [
                 "session_id": currentSession.id,
                 "session_duration": getSessionDuration()

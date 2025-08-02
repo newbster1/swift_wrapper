@@ -80,7 +80,7 @@ struct ProductListView: View {
             .onAppear {
                 TelemetryService.shared.logEvent(
                     name: "product_list_appeared",
-                    category: .navigation
+                    category: EventCategory.navigation
                 )
                 loadProducts()
             }
@@ -94,7 +94,7 @@ struct ProductListView: View {
         isLoading = true
         TelemetryService.shared.logEvent(
             name: "products_load_started",
-            category: .functional
+            category: EventCategory.functional
         )
         
         // Simulate API call
@@ -104,7 +104,7 @@ struct ProductListView: View {
             
             TelemetryService.shared.logEvent(
                 name: "products_loaded",
-                category: .functional,
+                category: EventCategory.functional,
                 attributes: [
                     "product_count": products.count,
                     "load_time": 1.0
@@ -125,7 +125,7 @@ struct ProductListView: View {
         
         TelemetryService.shared.logEvent(
             name: "products_refreshed",
-            category: .functional
+            category: EventCategory.functional
         )
     }
 }

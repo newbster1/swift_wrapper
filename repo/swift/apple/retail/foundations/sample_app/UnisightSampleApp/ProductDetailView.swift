@@ -134,7 +134,7 @@ struct ProductDetailView: View {
                         
                         TelemetryService.shared.logEvent(
                             name: "product_added_to_cart",
-                            category: .user,
+                            category: EventCategory.user,
                             attributes: [
                                 "product_id": product.id,
                                 "product_name": product.name,
@@ -164,7 +164,7 @@ struct ProductDetailView: View {
         .onAppear {
             TelemetryService.shared.logEvent(
                 name: "product_detail_viewed",
-                category: .navigation,
+                category: EventCategory.navigation,
                 attributes: [
                     "product_id": product.id,
                     "product_name": product.name,

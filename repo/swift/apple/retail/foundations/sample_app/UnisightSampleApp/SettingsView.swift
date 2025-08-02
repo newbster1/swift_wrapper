@@ -194,7 +194,7 @@ struct SettingsView: View {
             .onAppear {
                 TelemetryService.shared.logEvent(
                     name: "settings_viewed",
-                    category: .navigation
+                    category: EventCategory.navigation
                 )
             }
         }

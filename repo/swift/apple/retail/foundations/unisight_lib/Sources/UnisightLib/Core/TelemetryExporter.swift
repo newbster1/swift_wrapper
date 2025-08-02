@@ -3,7 +3,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 
 /// OTLP-compatible telemetry exporter for sending data to the dispatcher
-public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter {
+public class TelemetryExporter {
     
     // MARK: - Properties
     private let endpoint: String

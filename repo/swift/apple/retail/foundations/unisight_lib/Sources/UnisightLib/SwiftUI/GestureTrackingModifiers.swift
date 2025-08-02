@@ -279,7 +279,7 @@ public extension View {
         self.onChange(of: state) { oldValue, newValue in
             UnisightTelemetry.shared.logEvent(
                 name: "view_state_changed",
-                category: .user,
+                category: EventCategory.user,
                 attributes: [
                     "view_name": viewName,
                     "previous_state": String(describing: oldValue),
@@ -341,7 +341,7 @@ extension View {
         
         UnisightTelemetry.shared.logEvent(
             name: eventName,
-            category: .user,
+            category: EventCategory.user,
             attributes: [
                 "interaction_type": type.eventName,
                 "view_name": viewName,
@@ -535,7 +535,7 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
             
             UnisightTelemetry.shared.logEvent(
                 name: "user_\(type.eventName)",
-                category: .user,
+                category: EventCategory.user,
                 viewContext: viewContext
             )
         }

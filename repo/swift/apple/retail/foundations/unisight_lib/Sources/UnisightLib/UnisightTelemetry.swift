@@ -62,7 +62,7 @@ public class UnisightTelemetry {
         // Log initialization
         logEvent(
             name: "telemetry_initialized",
-            category: .system,
+            category: EventCategory.system,
             attributes: [
                 "session_id": sessionId,
                 "service_name": config.serviceName,
@@ -102,34 +102,23 @@ public class UnisightTelemetry {
         OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
         
         self.tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
-        // Setup meter provider
-        let metricExporter = OTLPMetricExporter(endpoint: configuration.dispatcherEndpoint)
-        let metricProcessor = MetricReader(
-            exporter: metricExporter,
-            exportInterval: TimeInterval(configuration.metricsExportInterval)
-        )
-        
+        // Setup meter provider - simplified approach
         self.meterProvider = MeterProviderBuilder()
             .with(resource: resource)
-            .with(reader: metricProcessor)
             .build()
-        
-        self.meter = meterProvider.get(instrumentationScopeName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
-        
-        // Setup logger provider
-        let logExporter = OTLPLogExporter(endpoint: configuration.dispatcherEndpoint)
-        let logProcessor = BatchLogRecordProcessor(logRecordExporter: logExporter)
-        
+
+        self.meter = meterProvider.get(instrumentationName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
+
+        // Setup logger provider - simplified approach
         self.loggerProvider = LoggerProviderBuilder()
             .with(resource: resource)
-            .with(processor: logProcessor)
             .build()
-        
-        self.logger = loggerProvider.get(instrumentationScopeName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
+
+        self.logger = loggerProvider.get(instrumentationName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
     }
     
     private func setupAutomaticInstrumentation() {
@@ -165,7 +154,7 @@ public class UnisightTelemetry {
         )
         
         // Monitor battery level changes
-        if configuration.events.contains(.system(.battery(0.1))) {
+        if configuration.events.contains(EventType.system(SystemEventType.battery(0.1))) {
             UIDevice.current.isBatteryMonitoringEnabled = true
             NotificationCenter.default.addObserver(
                 self,
@@ -176,7 +165,7 @@ public class UnisightTelemetry {
         }
         
         // Monitor accessibility changes
-        if configuration.events.contains(.system(.accessibility)) {
+        if configuration.events.contains(EventType.system(SystemEventType.accessibility)) {
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(accessibilityChanged),
@@ -195,26 +184,30 @@ public class UnisightTelemetry {
         
         logEvent(
             name: "session_started",
-            category: .system,
+            category: EventCategory.system,
             attributes: ["session_id": sessionId]
         )
     }
     
-    /// Log a custom event
+        /// Log a custom event
     public func logEvent(
         name: String,
         category: EventCategory,
         attributes: [String: Any] = [:],
-        timestamp: Date = Date()
+        timestamp: Date = Date(),
+        viewContext: ViewContext? = nil,
+        userContext: UserContext? = nil
     ) {
         let event = TelemetryEvent(
             name: name,
             category: category,
             attributes: attributes,
             timestamp: timestamp,
-            sessionId: sessionId
+            sessionId: sessionId,
+            viewContext: viewContext,
+            userContext: userContext
         )
-        
+
         eventProcessor.process(event: event)
     }
     
@@ -270,35 +263,35 @@ public class UnisightTelemetry {
     
     // MARK: - System Event Handlers
     
-    @objc private func appDidEnterBackground() {
+        @objc private func appDidEnterBackground() {
         logEvent(
             name: "app_background",
-            category: .system,
+            category: EventCategory.system,
             attributes: ["previous_state": "foreground"]
         )
     }
-    
+
     @objc private func appWillEnterForeground() {
         logEvent(
             name: "app_foreground",
-            category: .system,
+            category: EventCategory.system,
             attributes: ["previous_state": "background"]
         )
     }
-    
+
     @objc private func batteryLevelChanged() {
         let batteryLevel = UIDevice.current.batteryLevel
         logEvent(
             name: "battery_level_changed",
-            category: .system,
+            category: EventCategory.system,
             attributes: ["battery_level": batteryLevel]
         )
     }
-    
+
     @objc private func accessibilityChanged() {
         logEvent(
             name: "accessibility_changed",
-            category: .system,
+            category: EventCategory.system,
             attributes: [
                 "voice_over_enabled": UIAccessibility.isVoiceOverRunning,
                 "switch_control_enabled": UIAccessibility.isSwitchControlRunning,

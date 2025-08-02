@@ -15,7 +15,7 @@ struct UnisightSampleAppApp: App {
                     // Log app launch
                     TelemetryService.shared.logEvent(
                         name: "app_launched",
-                        category: .system,
+                        category: EventCategory.system,
                         attributes: [
                             "launch_time": Date().timeIntervalSince1970,
                             "app_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"

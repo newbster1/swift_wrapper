@@ -74,12 +74,13 @@ class TelemetryService {
             elementIdentifier: elementId,
             elementType: elementType,
             elementLabel: elementLabel,
+            viewHierarchy: [],
             coordinates: coordinates
         )
 
         logEvent(
             name: "user_\(interaction.eventName)",
-            category: .user,
+            category: EventCategory.user,
             viewContext: viewContext
         )
     }
@@ -98,12 +99,13 @@ class TelemetryService {
             elementIdentifier: elementId,
             elementType: elementType,
             elementLabel: elementLabel,
+            viewHierarchy: [],
             coordinates: coordinates
         )
 
         logEvent(
             name: "user_\(interaction)",
-            category: .user,
+            category: EventCategory.user,
             viewContext: viewContext
         )
     }
@@ -152,7 +154,7 @@ class TelemetryService {
             attributes["payload_size"] = payloadSize
         }
 
-        logEvent(name: "network_request", category: .functional, attributes: attributes)
+        logEvent(name: "network_request", category: EventCategory.functional, attributes: attributes)
     }
 
     func logError(_ error: Error, context: String? = nil) {
@@ -165,7 +167,7 @@ class TelemetryService {
             attributes["context"] = context
         }
 
-        logEvent(name: "error", category: .system, attributes: attributes)
+        logEvent(name: "error", category: EventCategory.system, attributes: attributes)
     }
 
     // MARK: - User Context
@@ -179,7 +181,7 @@ class TelemetryService {
         // This would be attached to future events
         UnisightTelemetry.shared.logEvent(
             name: "user_identified",
-            category: .user
+            category: EventCategory.user
         )
     }
 }
