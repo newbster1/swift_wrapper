@@ -102,42 +102,32 @@ public class UnisightTelemetry {
         OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
         
         self.tracer = tracerProvider.get(
-            instrumentationName: "UnisightTelemetry",
+            instrumentationScopeName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
-        // Setup meter provider
-        let metricExporter = OTLPMetricExporter(endpoint: configuration.dispatcherEndpoint)
-        let metricReader = PeriodicMetricReader(
-            exporter: metricExporter,
-            exportInterval: TimeInterval(configuration.metricsExportInterval)
-        )
-        
+        // Setup meter provider (simplified for now)
         self.meterProvider = MeterProviderBuilder()
             .with(resource: resource)
-            .with(reader: metricReader)
             .build()
         
         OpenTelemetry.registerMeterProvider(meterProvider: meterProvider)
         
         self.meter = meterProvider.get(
-            instrumentationName: "UnisightTelemetry",
+            instrumentationScopeName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
-        // Setup logger provider
-        let logExporter = OTLPLogExporter(endpoint: configuration.dispatcherEndpoint)
-        let logProcessor = BatchLogRecordProcessor(logRecordExporter: logExporter)
-        
+        // Setup logger provider (simplified for now)
         self.loggerProvider = LoggerProviderBuilder()
             .with(resource: resource)
-            .with(processor: logProcessor)
             .build()
         
         OpenTelemetry.registerLoggerProvider(loggerProvider: loggerProvider)
         
         self.logger = loggerProvider.get(
-            instrumentationName: "UnisightTelemetry"
+            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationVersion: "1.0.0"
         )
     }
     

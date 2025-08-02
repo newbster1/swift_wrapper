@@ -160,7 +160,7 @@ public struct UnisightLib {
             dispatcherEndpoint: dispatcherEndpoint,
             events: EventType.defaultEvents,
             scheme: .debug,
-            verbosity: .complete,
+            verbosity: .verbose,
             processing: .none,
             usesBatchProcessor: false,
             metricsExportInterval: 5,

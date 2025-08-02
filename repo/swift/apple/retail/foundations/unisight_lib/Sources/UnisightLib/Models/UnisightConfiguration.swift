@@ -80,7 +80,7 @@ public enum EventType: Hashable {
     case system(SystemEventType)
     case custom(String)
     
-    static var defaultEvents: Set<EventType> {
+    public static var defaultEvents: Set<EventType> {
         return [
             .user(.tap),
             .user(.selection),
