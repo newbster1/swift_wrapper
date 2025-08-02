@@ -219,23 +219,51 @@ public extension View {
         elementId: String? = nil,
         gestureTypes: [UserEventType] = [.tap, .longPress, .swipe(.left), .pinch, .rotation]
     ) -> some View {
-        var view = self
-        
-        // Apply each gesture type individually
+        self
+            .trackTapGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackLongPressGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackSwipeGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackPinchGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackRotationGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+    }
+    
+    // MARK: - Helper Methods for Conditional Gesture Tracking
+    
+    private func trackTapGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
         if gestureTypes.contains(.tap) {
-            view = view.onTapGesture {
+            return self.onTapGesture {
                 trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
             }
+        } else {
+            return self
         }
-        
+    }
+    
+    private func trackLongPressGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
         if gestureTypes.contains(.longPress) {
-            view = view.onLongPressGesture {
+            return self.onLongPressGesture {
                 trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
             }
+        } else {
+            return self
         }
-        
+    }
+    
+    private func trackSwipeGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
         if gestureTypes.contains(.swipe(.left)) {
-            view = view.gesture(
+            return self.gesture(
                 DragGesture()
                     .onEnded { value in
                         trackUserInteraction(
@@ -246,10 +274,18 @@ public extension View {
                         )
                     }
             )
+        } else {
+            return self
         }
-        
+    }
+    
+    private func trackPinchGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
         if gestureTypes.contains(.pinch) {
-            view = view.gesture(
+            return self.gesture(
                 MagnificationGesture()
                     .onEnded { value in
                         trackUserInteraction(
@@ -260,10 +296,18 @@ public extension View {
                         )
                     }
             )
+        } else {
+            return self
         }
-        
+    }
+    
+    private func trackRotationGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
         if gestureTypes.contains(.rotation) {
-            view = view.gesture(
+            return self.gesture(
                 RotationGesture()
                     .onEnded { value in
                         trackUserInteraction(
@@ -277,9 +321,9 @@ public extension View {
                         )
                     }
             )
+        } else {
+            return self
         }
-        
-        return view
     }
     
     // MARK: - View State Tracking

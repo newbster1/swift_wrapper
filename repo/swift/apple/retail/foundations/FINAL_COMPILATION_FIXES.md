@@ -202,26 +202,24 @@ if let coordinates = coordinates {
     attributes["coordinates"] = "\(coordinates.x),\(coordinates.y)"
 }
 
-// Fixed Generic Parameter Inference
-// Before: Complex AnyGesture array and reduce operations
-// After: Simple sequential view modifier application
-var view = self
+// Fixed Generic Parameter Inference and Self Assignment
+// Before: Complex AnyGesture array and reduce operations with self reassignment
+// After: Proper SwiftUI modifier chaining with conditional helper methods
+self
+    .trackTapGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+    .trackLongPressGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+    .trackSwipeGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+    .trackPinchGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+    .trackRotationGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
 
-// Apply each gesture type individually
-if gestureTypes.contains(.tap) {
-    view = view.onTapGesture {
-        trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
+// Helper methods return self when gesture type is not needed
+private func trackTapGestureIfNeeded(...) -> some View {
+    if gestureTypes.contains(.tap) {
+        return self.onTapGesture { ... }
+    } else {
+        return self
     }
 }
-
-if gestureTypes.contains(.longPress) {
-    view = view.onLongPressGesture {
-        trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
-    }
-}
-
-// ... similar for other gesture types
-return view
 ```
 
 ## 🏗️ Architecture Improvements
