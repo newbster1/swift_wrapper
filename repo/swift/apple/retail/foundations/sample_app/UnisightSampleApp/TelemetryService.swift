@@ -78,7 +78,7 @@ class TelemetryService {
         )
 
         logEvent(
-            name: "user_\(interaction.eventName)",
+            name: "user_\(interaction.userEventName)",
             category: .user,
             viewContext: viewContext
         )

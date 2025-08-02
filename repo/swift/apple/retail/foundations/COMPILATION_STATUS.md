@@ -51,7 +51,12 @@
 
 ### 9. Missing Event Name Properties
 - **Problem**: Missing `eventName` properties in `UserEventType` and `SystemEventType`
-- **Solution**: Added `eventName` computed properties to both enums
+- **Solution**: Added `userEventName` and `systemEventName` computed properties to avoid ambiguity
+- **Status**: ✅ FIXED
+
+### 11. Event Name Property Ambiguity
+- **Problem**: Ambiguous use of `eventName` property due to multiple definitions
+- **Solution**: Renamed properties to `userEventName` and `systemEventName` for clarity
 - **Status**: ✅ FIXED
 
 ### 10. OpenTelemetry API Argument Labels
@@ -73,7 +78,8 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 8. ✅ TelemetryEvent Codable conformance fixed
 9. ✅ Missing utility properties added
 10. ✅ Event name properties added
-11. ✅ OpenTelemetry API argument labels fixed
+11. ✅ Event name property ambiguity resolved
+12. ✅ OpenTelemetry API argument labels fixed
 
 ## Key API Fixes
 
@@ -83,7 +89,7 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - **Resource Attributes**: Used correct OpenTelemetry attribute format
 - **Instrumentation Names**: Fixed to use `instrumentationScopeName` and `instrumentationVersion`
 - **Codable Conformance**: Added custom encoding/decoding for TelemetryEvent
-- **Event Names**: Added computed properties for event name generation
+- **Event Names**: Added computed properties for event name generation with clear naming
 
 ## Files Modified
 
@@ -92,7 +98,9 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - `unisight_lib/Sources/UnisightLib/Core/EventProcessor.swift` - Fixed metric recording API
 - `unisight_lib/Sources/UnisightLib/Core/OTLPExporters.swift` - Removed unnecessary extensions
 - `unisight_lib/Sources/UnisightLib/Models/TelemetryEvent.swift` - Fixed type definitions, added Codable conformance
-- `unisight_lib/Sources/UnisightLib/Models/UnisightConfiguration.swift` - Fixed duplicate type declarations, added eventName properties
+- `unisight_lib/Sources/UnisightLib/Models/UnisightConfiguration.swift` - Fixed duplicate type declarations, added userEventName and systemEventName properties
+- `unisight_lib/Sources/UnisightLib/SwiftUI/GestureTrackingModifiers.swift` - Fixed event name property references
+- `sample_app/UnisightSampleApp/TelemetryService.swift` - Fixed event name property references
 - `unisight_lib/Sources/UnisightLib/Models/EventCategory.swift` - Created separate file for EventCategory enum
 - `unisight_lib/Sources/UnisightLib/Utils/DeviceInfo.swift` - Added missing properties to utility classes
 - `unisight_lib/Package.swift` - Restored OpenTelemetry dependencies

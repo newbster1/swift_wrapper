@@ -337,13 +337,13 @@ extension View {
             inputValues: inputValues
         )
         
-        let eventName = "user_\(type.eventName)"
+        let eventName = "user_\(type.userEventName)"
         
         UnisightTelemetry.shared.logEvent(
             name: eventName,
             category: .user,
             attributes: [
-                "interaction_type": type.eventName,
+                "interaction_type": type.userEventName,
                 "view_name": viewName,
                 "element_id": elementId ?? "",
                 "element_type": elementType ?? "",
@@ -354,32 +354,7 @@ extension View {
     }
 }
 
-// MARK: - UserEventType Extensions
 
-extension UserEventType {
-    var eventName: String {
-        switch self {
-        case .tap:
-            return "tap"
-        case .swipe(let direction):
-            return "swipe_\(direction.rawValue)"
-        case .rotate:
-            return "rotate"
-        case .pinch:
-            return "pinch"
-        case .pan:
-            return "pan"
-        case .longPress:
-            return "long_press"
-        case .anyGesture:
-            return "any_gesture"
-        case .selection:
-            return "selection"
-        case .entry:
-            return "text_entry"
-        }
-    }
-}
 
 // MARK: - Custom Gesture Recognizer Wrapper
 
@@ -534,7 +509,7 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
             )
             
             UnisightTelemetry.shared.logEvent(
-                name: "user_\(type.eventName)",
+                name: "user_\(type.userEventName)",
                 category: .user,
                 viewContext: viewContext
             )

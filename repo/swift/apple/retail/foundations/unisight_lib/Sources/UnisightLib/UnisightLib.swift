@@ -196,14 +196,14 @@ public extension UnisightTelemetry {
         attributes: [String: Any] = [:]
     ) {
         var eventAttributes = attributes
-        eventAttributes["interaction_type"] = interaction.eventName
+        eventAttributes["interaction_type"] = interaction.userEventName
         eventAttributes["view_name"] = viewName
         if let elementId = elementId {
             eventAttributes["element_id"] = elementId
         }
         
         logEvent(
-            name: "user_\(interaction.eventName)",
+            name: "user_\(interaction.userEventName)",
             category: .user,
             attributes: eventAttributes
         )
@@ -241,7 +241,7 @@ public extension UnisightTelemetry {
         }
         
         logEvent(
-            name: "system_\(event.eventName)",
+            name: "system_\(event.systemEventName)",
             category: .system,
             attributes: eventAttributes
         )
