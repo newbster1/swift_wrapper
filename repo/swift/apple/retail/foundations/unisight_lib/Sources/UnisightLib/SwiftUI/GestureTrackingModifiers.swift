@@ -219,7 +219,7 @@ public extension View {
     func trackAnyGesture(
         viewName: String,
         elementId: String? = nil,
-        gestureTypes: [UserEventType] = [.tap, .longPress, .pan, .pinch, .rotate]
+        gestureTypes: [UserEventType] = [.tap, .longPress, .swipe(.left), .pinch, .rotation]
     ) -> some View {
         var gestures: [AnyGesture] = []
         
@@ -245,13 +245,13 @@ public extension View {
             )
         }
         
-        if gestureTypes.contains(.pan) {
+        if gestureTypes.contains(.swipe(.left)) {
             gestures.append(
                 AnyGesture(
                     DragGesture()
                         .onEnded { value in
                             trackUserInteraction(
-                                type: .pan,
+                                type: .swipe(.left),
                                 viewName: viewName,
                                 elementId: elementId,
                                 coordinates: value.location
@@ -377,8 +377,9 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
         self.gestureTypes = gestureTypes
     }
     
-    public func makeUIView(context: Context) -> UIHostingController<Content> {
+    public func makeUIView(context: Context) -> UIView {
         let hostingController = UIHostingController(rootView: content)
+        let view = hostingController.view!
         
         // Add gesture recognizers based on types
         for gestureType in gestureTypes {
@@ -388,35 +389,14 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
                     target: context.coordinator,
                     action: #selector(Coordinator.handleTap(_:))
                 )
-                hostingController.view.addGestureRecognizer(tapGesture)
+                view.addGestureRecognizer(tapGesture)
                 
             case .longPress:
                 let longPressGesture = UILongPressGestureRecognizer(
                     target: context.coordinator,
                     action: #selector(Coordinator.handleLongPress(_:))
                 )
-                hostingController.view.addGestureRecognizer(longPressGesture)
-                
-            case .pan:
-                let panGesture = UIPanGestureRecognizer(
-                    target: context.coordinator,
-                    action: #selector(Coordinator.handlePan(_:))
-                )
-                hostingController.view.addGestureRecognizer(panGesture)
-                
-            case .pinch:
-                let pinchGesture = UIPinchGestureRecognizer(
-                    target: context.coordinator,
-                    action: #selector(Coordinator.handlePinch(_:))
-                )
-                hostingController.view.addGestureRecognizer(pinchGesture)
-                
-            case .rotate:
-                let rotationGesture = UIRotationGestureRecognizer(
-                    target: context.coordinator,
-                    action: #selector(Coordinator.handleRotation(_:))
-                )
-                hostingController.view.addGestureRecognizer(rotationGesture)
+                view.addGestureRecognizer(longPressGesture)
                 
             case .swipe(let direction):
                 let swipeGesture = UISwipeGestureRecognizer(
@@ -424,27 +404,47 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
                     action: #selector(Coordinator.handleSwipe(_:))
                 )
                 swipeGesture.direction = direction.uiSwipeDirection
-                hostingController.view.addGestureRecognizer(swipeGesture)
+                view.addGestureRecognizer(swipeGesture)
+                
+            case .pinch:
+                let pinchGesture = UIPinchGestureRecognizer(
+                    target: context.coordinator,
+                    action: #selector(Coordinator.handlePinch(_:))
+                )
+                view.addGestureRecognizer(pinchGesture)
+                
+            case .rotation:
+                let rotationGesture = UIRotationGestureRecognizer(
+                    target: context.coordinator,
+                    action: #selector(Coordinator.handleRotation(_:))
+                )
+                view.addGestureRecognizer(rotationGesture)
                 
             default:
                 break
             }
         }
         
-        return hostingController
+        return view
     }
     
-    public func updateUIView(_ uiView: UIHostingController<Content>, context: Context) {
-        uiView.rootView = content
+    public func updateUIView(_ uiView: UIView, context: Context) {
+        // Update the hosting controller's root view
+        if let hostingController = context.coordinator.hostingController {
+            hostingController.rootView = content
+        }
     }
     
     public func makeCoordinator() -> Coordinator {
-        Coordinator(viewName: viewName, elementId: elementId)
+        let coordinator = Coordinator(viewName: viewName, elementId: elementId)
+        coordinator.hostingController = UIHostingController(rootView: content)
+        return coordinator
     }
     
     public class Coordinator: NSObject {
         let viewName: String
         let elementId: String?
+        var hostingController: UIHostingController<Content>?
         
         init(viewName: String, elementId: String?) {
             self.viewName = viewName
@@ -462,14 +462,10 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
             trackGesture(.longPress, location: location)
         }
         
-        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-            guard gesture.state == .ended else { return }
+        @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
             let location = gesture.location(in: gesture.view)
-            let velocity = gesture.velocity(in: gesture.view)
-            trackGesture(.pan, location: location, properties: [
-                "velocity_x": velocity.x,
-                "velocity_y": velocity.y
-            ])
+            let direction = SwipeDirection.from(uiDirection: gesture.direction)
+            trackGesture(.swipe(direction), location: location)
         }
         
         @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
@@ -484,16 +480,10 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
         @objc func handleRotation(_ gesture: UIRotationGestureRecognizer) {
             guard gesture.state == .ended else { return }
             let location = gesture.location(in: gesture.view)
-            trackGesture(.rotate, location: location, properties: [
+            trackGesture(.rotation, location: location, properties: [
                 "rotation": gesture.rotation,
                 "velocity": gesture.velocity
             ])
-        }
-        
-        @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
-            let location = gesture.location(in: gesture.view)
-            let direction = SwipeDirection.from(uiDirection: gesture.direction)
-            trackGesture(.swipe(direction), location: location)
         }
         
         private func trackGesture(

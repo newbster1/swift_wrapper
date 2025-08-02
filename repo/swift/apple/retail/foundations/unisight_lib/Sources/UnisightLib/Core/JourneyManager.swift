@@ -256,7 +256,8 @@ public extension View {
             .trackScreenDisappeared(screenName)
     }
     
-    /// Track navigation destination changes
+    /// Track navigation destination changes (iOS 16.0+)
+    @available(iOS 16.0, *)
     func trackNavigationDestination<D>(
         for data: D.Type,
         destination: @escaping (D) -> some View

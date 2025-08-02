@@ -88,7 +88,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
     
     // MARK: - LogRecordExporter
     
-    public func export(logRecords: [ReadableLogRecord], explicitTimeout: TimeInterval?) -> LogRecordExporterResult {
+    public func export(logRecords: [ReadableLogRecord], explicitTimeout: TimeInterval?) -> LogRecordExporterResultCode {
         let otlpLogs = logRecords.map { convertToOTLPLog($0) }
         let request = OTLPLogRequest(resourceLogs: [
             OTLPResourceLogs(
@@ -105,7 +105,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         return sendRequest(request, to: "\(endpoint)/logs") ? .success : .failure
     }
     
-    public func forceFlush(explicitTimeout: TimeInterval?) -> LogRecordExporterResult {
+    public func forceFlush(explicitTimeout: TimeInterval?) -> LogRecordExporterResultCode {
         return .success
     }
     
@@ -209,9 +209,9 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
     private func convertToOTLPLog(_ logRecord: ReadableLogRecord) -> OTLPLogRecord {
         return OTLPLogRecord(
             timeUnixNano: UInt64(logRecord.timestamp.timeIntervalSince1970 * 1_000_000_000),
-            severityNumber: convertLogSeverity(logRecord.severity),
-            severityText: logRecord.severity.name,
-            body: OTLPAnyValue.stringValue(logRecord.body),
+            severityNumber: convertLogSeverity(logRecord.severityNumber),
+            severityText: logRecord.severityText,
+            body: OTLPAnyValue.stringValue(logRecord.body.description),
             attributes: logRecord.attributes.map { convertToOTLPKeyValue($0.key, $0.value) }
         )
     }
@@ -237,7 +237,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         }
     }
     
-    private func convertLogSeverity(_ severity: LogSeverity) -> Int {
+    private func convertLogSeverity(_ severity: SeverityNumber) -> Int {
         switch severity {
         case .trace: return 1
         case .debug: return 5
@@ -245,6 +245,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         case .warn: return 13
         case .error: return 17
         case .fatal: return 21
+        default: return 9
         }
     }
     

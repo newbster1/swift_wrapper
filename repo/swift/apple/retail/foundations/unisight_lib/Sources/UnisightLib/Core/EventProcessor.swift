@@ -39,6 +39,8 @@ public class EventProcessor {
             consolidateEvent(event)
         case .none:
             processEventImmediately(event)
+        case .batch:
+            consolidateEvent(event)
         }
     }
     
@@ -143,15 +145,22 @@ public class EventProcessor {
         span.end()
         
         // Log consolidated event
-        UnisightTelemetry.shared.getLogger().log(
-            text: "Consolidated event: \(consolidatedEvent.baseEvent.name)",
-            severity: .info,
+        let logRecord = LogRecord(
+            timestamp: Date(),
+            observedTimestamp: Date(),
+            traceId: nil,
+            spanId: nil,
+            traceFlags: TraceFlags(),
+            severityText: "INFO",
+            severityNumber: SeverityNumber.info,
+            body: AttributeValue.string("Consolidated event: \(consolidatedEvent.baseEvent.name)"),
             attributes: [
                 "event_count": AttributeValue.int(consolidatedEvent.eventCount),
                 "category": AttributeValue.string(consolidatedEvent.baseEvent.category.rawValue),
                 "time_span": AttributeValue.double(consolidatedEvent.timeSpan)
             ]
         )
+        UnisightTelemetry.shared.getLogger().emit(logRecord: logRecord)
     }
     
     private func createSpanForEvent(_ event: TelemetryEvent) {
@@ -202,24 +211,31 @@ public class EventProcessor {
         }
         
         // Determine log severity based on event category
-        let severity: LogSeverity = {
+        let (severityText, severityNumber): (String, SeverityNumber) = {
             switch event.category {
             case .system:
-                return .info
+                return ("INFO", SeverityNumber.info)
             case .user, .navigation:
-                return .debug
+                return ("DEBUG", SeverityNumber.debug)
             case .functional:
-                return .info
+                return ("INFO", SeverityNumber.info)
             case .custom:
-                return .debug
+                return ("DEBUG", SeverityNumber.debug)
             }
         }()
         
-        logger.log(
-            text: "Event: \(event.name)",
-            severity: severity,
+        let logRecord = LogRecord(
+            timestamp: Date(),
+            observedTimestamp: Date(),
+            traceId: nil,
+            spanId: nil,
+            traceFlags: TraceFlags(),
+            severityText: severityText,
+            severityNumber: severityNumber,
+            body: AttributeValue.string("Event: \(event.name)"),
             attributes: logAttributes
         )
+        logger.emit(logRecord: logRecord)
     }
     
     private func recordMetricsForEvent(_ event: TelemetryEvent) {
@@ -236,7 +252,7 @@ public class EventProcessor {
         )
         
         // Record session metrics
-        let sessionDuration = meter.createDoubleHistogram(name: "session_duration")
+        let sessionDuration = meter.createDoubleHistogram(name: "session_duration", explicitBoundaries: nil, absolute: false)
         if let journeyManager = JourneyManager.shared {
             sessionDuration.record(
                 value: journeyManager.getSessionDuration(),
@@ -246,7 +262,7 @@ public class EventProcessor {
         
         // Record screen time metrics if available
         if event.category == .navigation, let timeOnScreen = event.timeOnScreen {
-            let screenTimeHistogram = meter.createDoubleHistogram(name: "screen_time")
+            let screenTimeHistogram = meter.createDoubleHistogram(name: "screen_time", explicitBoundaries: nil, absolute: false)
             screenTimeHistogram.record(
                 value: timeOnScreen,
                 labels: [
