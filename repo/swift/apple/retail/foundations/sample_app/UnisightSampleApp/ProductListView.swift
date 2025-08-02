@@ -29,7 +29,7 @@ struct ProductListView: View {
                 SearchBar(text: $searchText)
                     .onChange(of: searchText) { oldValue, newValue in
                         TelemetryService.shared.logUserInteraction(
-                            "search",
+                            .entry,
                             viewName: "ProductList",
                             elementId: "search_bar"
                         )
@@ -45,7 +45,7 @@ struct ProductListView: View {
                             ) {
                                 selectedCategory = category
                                 TelemetryService.shared.logUserInteraction(
-                                    "category_filter",
+                                    .selection,
                                     viewName: "ProductList",
                                     elementId: "category_\(category.lowercased())"
                                 )
@@ -68,7 +68,7 @@ struct ProductListView: View {
                         }
                         .onTapGesture {
                             TelemetryService.shared.logUserInteraction(
-                                "product_tap",
+                                .tap,
                                 viewName: "ProductList",
                                 elementId: "product_\(product.id)"
                             )
@@ -115,7 +115,7 @@ struct ProductListView: View {
     
     private func refreshProducts() async {
         TelemetryService.shared.logUserInteraction(
-            "pull_to_refresh",
+            .pan,
             viewName: "ProductList"
         )
         

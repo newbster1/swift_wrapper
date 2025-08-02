@@ -40,7 +40,7 @@ struct ProductDetailView: View {
                         Button(action: {
                             isFavorite.toggle()
                             TelemetryService.shared.logUserInteraction(
-                                isFavorite ? "favorite_added" : "favorite_removed",
+                                .tap,
                                 viewName: "ProductDetail",
                                 elementId: "favorite_button"
                             )
@@ -93,7 +93,7 @@ struct ProductDetailView: View {
                                 if quantity > 1 {
                                     quantity -= 1
                                     TelemetryService.shared.logUserInteraction(
-                                        "quantity_decreased",
+                                        .tap,
                                         viewName: "ProductDetail",
                                         elementId: "quantity_stepper"
                                     )
@@ -111,7 +111,7 @@ struct ProductDetailView: View {
                             Button(action: {
                                 quantity += 1
                                 TelemetryService.shared.logUserInteraction(
-                                    "quantity_increased",
+                                    .tap,
                                     viewName: "ProductDetail",
                                     elementId: "quantity_stepper"
                                 )
@@ -127,7 +127,7 @@ struct ProductDetailView: View {
                     Button(action: {
                         showingAddToCart = true
                         TelemetryService.shared.logUserInteraction(
-                            "add_to_cart",
+                            .tap,
                             viewName: "ProductDetail",
                             elementId: "add_to_cart_button"
                         )

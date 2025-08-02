@@ -26,7 +26,7 @@ struct SettingsView: View {
                         Toggle("", isOn: $telemetryEnabled)
                             .onChange(of: telemetryEnabled) { oldValue, newValue in
                                 TelemetryService.shared.logUserInteraction(
-                                    newValue ? "telemetry_enabled" : "telemetry_disabled",
+                                    .tap,
                                     viewName: "Settings",
                                     elementId: "telemetry_toggle"
                                 )
@@ -36,7 +36,7 @@ struct SettingsView: View {
                     Button("View Telemetry Info") {
                         showingTelemetryInfo = true
                         TelemetryService.shared.logUserInteraction(
-                            "telemetry_info_viewed",
+                            .tap,
                             viewName: "Settings",
                             elementId: "telemetry_info_button"
                         )

@@ -11,27 +11,26 @@ struct ContentView: View {
                     Text("Products")
                 }
                 .tag(0)
-            
+                .trackScreen("ProductList")
+
             SettingsView()
                 .tabItem {
                     Image(systemName: "gear")
                     Text("Settings")
                 }
                 .tag(1)
+                .trackScreen("Settings")
         }
         .onChange(of: selectedTab) { oldValue, newValue in
-            // Log tab changes
             let tabNames = ["Products", "Settings"]
             TelemetryService.shared.logNavigation(
                 from: tabNames[safe: oldValue],
-                to: tabNames[safe: newValue] ?? "Unknown"
+                to: tabNames[safe: newValue] ?? "Unknown",
+                method: .tab
             )
         }
         .onAppear {
-            TelemetryService.shared.logEvent(
-                name: "main_view_appeared",
-                category: .navigation
-            )
+            TelemetryService.shared.logScreenAppeared("MainTabView")
         }
     }
 }
