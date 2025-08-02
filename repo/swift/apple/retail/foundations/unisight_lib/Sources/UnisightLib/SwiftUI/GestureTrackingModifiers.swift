@@ -259,11 +259,17 @@ public extension View {
             )
         }
         
-        return self.gesture(
-            gestures.reduce(AnyGesture(TapGesture().onEnded { _ in })) { result, gesture in
-                AnyGesture(result.exclusively(before: gesture))
-            }
-        )
+        if gestures.isEmpty {
+            return self
+        } else if gestures.count == 1 {
+            return self.gesture(gestures[0])
+        } else {
+            return self.gesture(
+                gestures.reduce(gestures[0]) { result, gesture in
+                    AnyGesture(result.exclusively(before: gesture))
+                }
+            )
+        }
     }
     
     // MARK: - View State Tracking

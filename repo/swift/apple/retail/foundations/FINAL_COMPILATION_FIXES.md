@@ -201,6 +201,21 @@ var attributes: [String: Any] = [
 if let coordinates = coordinates {
     attributes["coordinates"] = "\(coordinates.x),\(coordinates.y)"
 }
+
+// Fixed Generic Parameter Inference
+// Before: Complex reduce with AnyGesture(TapGesture().onEnded { _ in })
+// After: Simple conditional logic with proper type inference
+if gestures.isEmpty {
+    return self
+} else if gestures.count == 1 {
+    return self.gesture(gestures[0])
+} else {
+    return self.gesture(
+        gestures.reduce(gestures[0]) { result, gesture in
+            AnyGesture(result.exclusively(before: gesture))
+        }
+    )
+}
 ```
 
 ## 🏗️ Architecture Improvements
