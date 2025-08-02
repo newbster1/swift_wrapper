@@ -61,7 +61,7 @@
 
 ### 10. OpenTelemetry API Argument Labels
 - **Problem**: Incorrect argument labels in OpenTelemetry API calls
-- **Solution**: Fixed to use correct `instrumentationName` parameter (logger doesn't take `instrumentationVersion`)
+- **Solution**: Fixed to use correct `instrumentationScopeName` for meter and logger, `instrumentationName` for tracer
 - **Status**: ✅ FIXED
 
 ## Current Status
@@ -87,7 +87,7 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - **PeriodicMetricReader**: Used correct constructor with `exporter` and `exportInterval`
 - **URLSession Instrumentation**: Restored proper initialization
 - **Resource Attributes**: Used correct OpenTelemetry attribute format
-- **Instrumentation Names**: Fixed to use `instrumentationName` (logger doesn't take `instrumentationVersion`)
+- **Instrumentation Names**: Fixed to use correct parameter names for each provider type
 - **Codable Conformance**: Added custom encoding/decoding for TelemetryEvent
 - **Event Names**: Added computed properties for event name generation with clear naming
 
