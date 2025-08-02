@@ -256,6 +256,7 @@ func setUserContext(userId: String, segment: String? = nil) {
 **Issues Fixed:**
 - **DeviceInfo Scope Conflict**: Removed duplicate DeviceInfo struct from sample app that was conflicting with UnisightLib's DeviceInfo
 - **Build Cache Issues**: Resolved compilation errors caused by duplicate type definitions and stale build cache
+- **Missing Import**: Added UnisightLib import to UnisightSampleAppApp.swift to access DeviceInfo
 
 **Changes:**
 ```swift
@@ -265,6 +266,17 @@ struct DeviceInfo { ... }  // ❌ Duplicate definition
 
 // After: Using UnisightLib's DeviceInfo
 // UnisightLib provides: public struct DeviceInfo { ... }  // ✅ Single source of truth
+
+// Added proper import to UnisightSampleAppApp.swift
+import SwiftUI
+import UnisightLib  // ✅ Added to access DeviceInfo
+
+// Now DeviceInfo can be used properly
+let attributes: [String: Any] = [
+    "device_model": DeviceInfo.model,
+    "os_version": DeviceInfo.osVersion,
+    "app_version": DeviceInfo.appVersion
+]
 ```
 
 **Resolution:**
@@ -272,6 +284,7 @@ struct DeviceInfo { ... }  // ❌ Duplicate definition
 - Sample app now uses `DeviceInfo` from UnisightLib
 - Eliminates type conflicts and build cache issues
 - Cleaned build cache to resolve stale compilation errors
+- Added `import UnisightLib` to UnisightSampleAppApp.swift
 
 **Build Cache Cleaning:**
 ```bash
