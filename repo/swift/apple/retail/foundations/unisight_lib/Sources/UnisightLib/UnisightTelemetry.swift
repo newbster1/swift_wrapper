@@ -114,7 +114,7 @@ public class UnisightTelemetry {
         OpenTelemetry.registerMeterProvider(meterProvider: meterProvider)
         
         self.meter = meterProvider.get(
-            instrumentationName: "UnisightTelemetry",
+            instrumentationScopeName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
@@ -126,7 +126,8 @@ public class UnisightTelemetry {
         OpenTelemetry.registerLoggerProvider(loggerProvider: loggerProvider)
         
         self.logger = loggerProvider.get(
-            instrumentationName: "UnisightTelemetry"
+            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationVersion: "1.0.0"
         )
     }
     
