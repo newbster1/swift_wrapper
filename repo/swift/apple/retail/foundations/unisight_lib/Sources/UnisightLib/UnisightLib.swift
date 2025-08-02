@@ -42,8 +42,16 @@ import Foundation
 
 // MARK: - Public API Exports
 
-// Note: All types are defined within this module, so no @_exported imports are needed
-// The types are automatically available when importing UnisightLib
+// Export all public types and symbols
+@_exported import Foundation
+@_exported import UIKit
+#if canImport(SwiftUI)
+@_exported import SwiftUI
+#endif
+
+// Re-export OpenTelemetry types for convenience
+@_exported import OpenTelemetryApi
+@_exported import OpenTelemetrySdk
 
 // MARK: - SwiftUI Extensions (iOS 13.0+)
 #if canImport(SwiftUI)
