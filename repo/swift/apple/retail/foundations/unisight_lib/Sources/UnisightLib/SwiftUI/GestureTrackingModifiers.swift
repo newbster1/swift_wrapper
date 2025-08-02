@@ -79,15 +79,15 @@ public extension View {
             DragGesture()
                 .onEnded { value in
                     trackUserInteraction(
-                        type: .pan,
+                        type: .swipe(.left),
                         viewName: viewName,
                         elementId: elementId,
                         coordinates: value.location,
                         gestureProperties: [
                             "start_location": "\(value.startLocation.x),\(value.startLocation.y)",
                             "end_location": "\(value.location.x),\(value.location.y)",
-                            "translation": "\(value.translation.x),\(value.translation.y)",
-                            "velocity": "\(value.velocity.x),\(value.velocity.y)"
+                            "translation": "\(value.translation.width),\(value.translation.height)",
+                            "velocity": "\(value.velocity.width),\(value.velocity.height)"
                         ]
                     )
                     onDragEnded?(value)
@@ -131,7 +131,7 @@ public extension View {
             RotationGesture()
                 .onEnded { value in
                     trackUserInteraction(
-                        type: .rotate,
+                        type: .rotation,
                         viewName: viewName,
                         elementId: elementId,
                         gestureProperties: [
@@ -153,13 +153,12 @@ public extension View {
         value: T,
         onChanged: ((T) -> Void)? = nil
     ) -> some View {
-        self.onChange(of: value) { oldValue, newValue in
+        self.onChange(of: value) { newValue in
             trackUserInteraction(
                 type: .entry,
                 viewName: viewName,
                 elementId: elementId,
                 inputValues: [
-                    "old_value": String(describing: oldValue),
                     "new_value": String(describing: newValue)
                 ]
             )
@@ -176,13 +175,12 @@ public extension View {
         selection: T,
         onSelectionChanged: ((T) -> Void)? = nil
     ) -> some View {
-        self.onChange(of: selection) { oldValue, newValue in
+        self.onChange(of: selection) { newValue in
             trackUserInteraction(
                 type: .selection,
                 viewName: viewName,
                 elementId: elementId,
                 inputValues: [
-                    "previous_selection": String(describing: oldValue),
                     "new_selection": String(describing: newValue)
                 ]
             )
@@ -219,53 +217,113 @@ public extension View {
     func trackAnyGesture(
         viewName: String,
         elementId: String? = nil,
-        gestureTypes: [UserEventType] = [.tap, .longPress, .pan, .pinch, .rotate]
+        gestureTypes: [UserEventType] = [.tap, .longPress, .swipe(.left), .pinch, .rotation]
     ) -> some View {
-        var gestures: [AnyGesture] = []
-        
+        self
+            .trackTapGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackLongPressGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackSwipeGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackPinchGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+            .trackRotationGestureIfNeeded(viewName: viewName, elementId: elementId, gestureTypes: gestureTypes)
+    }
+    
+    // MARK: - Helper Methods for Conditional Gesture Tracking
+    
+    private func trackTapGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
         if gestureTypes.contains(.tap) {
-            gestures.append(
-                AnyGesture(
-                    TapGesture()
-                        .onEnded { _ in
-                            trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
-                        }
-                )
-            )
-        }
-        
-        if gestureTypes.contains(.longPress) {
-            gestures.append(
-                AnyGesture(
-                    LongPressGesture()
-                        .onEnded { _ in
-                            trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
-                        }
-                )
-            )
-        }
-        
-        if gestureTypes.contains(.pan) {
-            gestures.append(
-                AnyGesture(
-                    DragGesture()
-                        .onEnded { value in
-                            trackUserInteraction(
-                                type: .pan,
-                                viewName: viewName,
-                                elementId: elementId,
-                                coordinates: value.location
-                            )
-                        }
-                )
-            )
-        }
-        
-        return self.gesture(
-            gestures.reduce(AnyGesture(TapGesture().onEnded { _ in })) { result, gesture in
-                AnyGesture(result.exclusively(before: gesture))
+            return self.onTapGesture {
+                trackUserInteraction(type: .tap, viewName: viewName, elementId: elementId)
             }
-        )
+        } else {
+            return self
+        }
+    }
+    
+    private func trackLongPressGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
+        if gestureTypes.contains(.longPress) {
+            return self.onLongPressGesture {
+                trackUserInteraction(type: .longPress, viewName: viewName, elementId: elementId)
+            }
+        } else {
+            return self
+        }
+    }
+    
+    private func trackSwipeGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
+        if gestureTypes.contains(.swipe(.left)) {
+            return self.gesture(
+                DragGesture()
+                    .onEnded { value in
+                        trackUserInteraction(
+                            type: .swipe(.left),
+                            viewName: viewName,
+                            elementId: elementId,
+                            coordinates: value.location
+                        )
+                    }
+            )
+        } else {
+            return self
+        }
+    }
+    
+    private func trackPinchGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
+        if gestureTypes.contains(.pinch) {
+            return self.gesture(
+                MagnificationGesture()
+                    .onEnded { value in
+                        trackUserInteraction(
+                            type: .pinch,
+                            viewName: viewName,
+                            elementId: elementId,
+                            gestureProperties: ["magnification": value]
+                        )
+                    }
+            )
+        } else {
+            return self
+        }
+    }
+    
+    private func trackRotationGestureIfNeeded(
+        viewName: String,
+        elementId: String?,
+        gestureTypes: [UserEventType]
+    ) -> some View {
+        if gestureTypes.contains(.rotation) {
+            return self.gesture(
+                RotationGesture()
+                    .onEnded { value in
+                        trackUserInteraction(
+                            type: .rotation,
+                            viewName: viewName,
+                            elementId: elementId,
+                            gestureProperties: [
+                                "rotation_radians": value.radians,
+                                "rotation_degrees": value.degrees
+                            ]
+                        )
+                    }
+            )
+        } else {
+            return self
+        }
     }
     
     // MARK: - View State Tracking
@@ -276,17 +334,16 @@ public extension View {
         state: T,
         onStateChanged: ((T, T) -> Void)? = nil
     ) -> some View {
-        self.onChange(of: state) { oldValue, newValue in
+        self.onChange(of: state) { newValue in
             UnisightTelemetry.shared.logEvent(
                 name: "view_state_changed",
                 category: .user,
                 attributes: [
                     "view_name": viewName,
-                    "previous_state": String(describing: oldValue),
                     "new_state": String(describing: newValue)
                 ]
             )
-            onStateChanged?(oldValue, newValue)
+            onStateChanged?(newValue, newValue)
         }
     }
     
@@ -327,59 +384,44 @@ extension View {
         gestureProperties: [String: Any]? = nil,
         inputValues: [String: Any]? = nil
     ) {
-        let viewContext = ViewContext(
-            viewName: viewName,
-            elementIdentifier: elementId,
-            elementType: elementType,
-            elementLabel: elementLabel,
-            coordinates: coordinates,
-            gestureProperties: gestureProperties,
-            inputValues: inputValues
-        )
+        let eventName = "user_\(type.userEventName)"
         
-        let eventName = "user_\(type.eventName)"
+        var attributes: [String: Any] = [
+            "interaction_type": type.userEventName,
+            "view_name": viewName,
+            "element_id": elementId ?? "",
+            "element_type": elementType ?? "",
+            "element_label": elementLabel ?? ""
+        ]
+        
+        // Add coordinates if available
+        if let coordinates = coordinates {
+            attributes["coordinates"] = "\(coordinates.x),\(coordinates.y)"
+        }
+        
+        // Add gesture properties if available
+        if let gestureProperties = gestureProperties {
+            for (key, value) in gestureProperties {
+                attributes["gesture_\(key)"] = value
+            }
+        }
+        
+        // Add input values if available
+        if let inputValues = inputValues {
+            for (key, value) in inputValues {
+                attributes["input_\(key)"] = value
+            }
+        }
         
         UnisightTelemetry.shared.logEvent(
             name: eventName,
             category: .user,
-            attributes: [
-                "interaction_type": type.eventName,
-                "view_name": viewName,
-                "element_id": elementId ?? "",
-                "element_type": elementType ?? "",
-                "element_label": elementLabel ?? ""
-            ],
-            viewContext: viewContext
+            attributes: attributes
         )
     }
 }
 
-// MARK: - UserEventType Extensions
 
-extension UserEventType {
-    var eventName: String {
-        switch self {
-        case .tap:
-            return "tap"
-        case .swipe(let direction):
-            return "swipe_\(direction.rawValue)"
-        case .rotate:
-            return "rotate"
-        case .pinch:
-            return "pinch"
-        case .pan:
-            return "pan"
-        case .longPress:
-            return "long_press"
-        case .anyGesture:
-            return "any_gesture"
-        case .selection:
-            return "selection"
-        case .entry:
-            return "text_entry"
-        }
-    }
-}
 
 // MARK: - Custom Gesture Recognizer Wrapper
 
@@ -402,8 +444,9 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
         self.gestureTypes = gestureTypes
     }
     
-    public func makeUIView(context: Context) -> UIHostingController<Content> {
+    public func makeUIView(context: Context) -> UIView {
         let hostingController = UIHostingController(rootView: content)
+        let view = hostingController.view!
         
         // Add gesture recognizers based on types
         for gestureType in gestureTypes {
@@ -413,35 +456,14 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
                     target: context.coordinator,
                     action: #selector(Coordinator.handleTap(_:))
                 )
-                hostingController.view.addGestureRecognizer(tapGesture)
+                view.addGestureRecognizer(tapGesture)
                 
             case .longPress:
                 let longPressGesture = UILongPressGestureRecognizer(
                     target: context.coordinator,
                     action: #selector(Coordinator.handleLongPress(_:))
                 )
-                hostingController.view.addGestureRecognizer(longPressGesture)
-                
-            case .pan:
-                let panGesture = UIPanGestureRecognizer(
-                    target: context.coordinator,
-                    action: #selector(Coordinator.handlePan(_:))
-                )
-                hostingController.view.addGestureRecognizer(panGesture)
-                
-            case .pinch:
-                let pinchGesture = UIPinchGestureRecognizer(
-                    target: context.coordinator,
-                    action: #selector(Coordinator.handlePinch(_:))
-                )
-                hostingController.view.addGestureRecognizer(pinchGesture)
-                
-            case .rotate:
-                let rotationGesture = UIRotationGestureRecognizer(
-                    target: context.coordinator,
-                    action: #selector(Coordinator.handleRotation(_:))
-                )
-                hostingController.view.addGestureRecognizer(rotationGesture)
+                view.addGestureRecognizer(longPressGesture)
                 
             case .swipe(let direction):
                 let swipeGesture = UISwipeGestureRecognizer(
@@ -449,27 +471,47 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
                     action: #selector(Coordinator.handleSwipe(_:))
                 )
                 swipeGesture.direction = direction.uiSwipeDirection
-                hostingController.view.addGestureRecognizer(swipeGesture)
+                view.addGestureRecognizer(swipeGesture)
+                
+            case .pinch:
+                let pinchGesture = UIPinchGestureRecognizer(
+                    target: context.coordinator,
+                    action: #selector(Coordinator.handlePinch(_:))
+                )
+                view.addGestureRecognizer(pinchGesture)
+                
+            case .rotation:
+                let rotationGesture = UIRotationGestureRecognizer(
+                    target: context.coordinator,
+                    action: #selector(Coordinator.handleRotation(_:))
+                )
+                view.addGestureRecognizer(rotationGesture)
                 
             default:
                 break
             }
         }
         
-        return hostingController
+        return view
     }
     
-    public func updateUIView(_ uiView: UIHostingController<Content>, context: Context) {
-        uiView.rootView = content
+    public func updateUIView(_ uiView: UIView, context: Context) {
+        // Update the hosting controller's root view
+        if let hostingController = context.coordinator.hostingController {
+            hostingController.rootView = content
+        }
     }
     
     public func makeCoordinator() -> Coordinator {
-        Coordinator(viewName: viewName, elementId: elementId)
+        let coordinator = Coordinator(viewName: viewName, elementId: elementId)
+        coordinator.hostingController = UIHostingController(rootView: content)
+        return coordinator
     }
     
     public class Coordinator: NSObject {
         let viewName: String
         let elementId: String?
+        var hostingController: UIHostingController<Content>?
         
         init(viewName: String, elementId: String?) {
             self.viewName = viewName
@@ -487,14 +529,10 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
             trackGesture(.longPress, location: location)
         }
         
-        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-            guard gesture.state == .ended else { return }
+        @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
             let location = gesture.location(in: gesture.view)
-            let velocity = gesture.velocity(in: gesture.view)
-            trackGesture(.pan, location: location, properties: [
-                "velocity_x": velocity.x,
-                "velocity_y": velocity.y
-            ])
+            let direction = SwipeDirection.from(uiDirection: gesture.direction)
+            trackGesture(.swipe(direction), location: location)
         }
         
         @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
@@ -509,16 +547,10 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
         @objc func handleRotation(_ gesture: UIRotationGestureRecognizer) {
             guard gesture.state == .ended else { return }
             let location = gesture.location(in: gesture.view)
-            trackGesture(.rotate, location: location, properties: [
+            trackGesture(.rotation, location: location, properties: [
                 "rotation": gesture.rotation,
                 "velocity": gesture.velocity
             ])
-        }
-        
-        @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
-            let location = gesture.location(in: gesture.view)
-            let direction = SwipeDirection.from(uiDirection: gesture.direction)
-            trackGesture(.swipe(direction), location: location)
         }
         
         private func trackGesture(
@@ -526,17 +558,21 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
             location: CGPoint,
             properties: [String: Any] = [:]
         ) {
-            let viewContext = ViewContext(
-                viewName: viewName,
-                elementIdentifier: elementId,
-                coordinates: location,
-                gestureProperties: properties
-            )
+            var attributes: [String: Any] = [
+                "view_name": viewName,
+                "element_id": elementId ?? "",
+                "coordinates": "\(location.x),\(location.y)"
+            ]
+            
+            // Add gesture properties
+            for (key, value) in properties {
+                attributes["gesture_\(key)"] = value
+            }
             
             UnisightTelemetry.shared.logEvent(
-                name: "user_\(type.eventName)",
+                name: "user_\(type.userEventName)",
                 category: .user,
-                viewContext: viewContext
+                attributes: attributes
             )
         }
     }

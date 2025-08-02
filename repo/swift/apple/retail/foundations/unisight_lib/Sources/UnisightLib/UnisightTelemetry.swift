@@ -40,16 +40,17 @@ public class UnisightTelemetry {
         
         self.configuration = config
         
-        // Initialize OpenTelemetry components
-        try setupOpenTelemetry()
-        
-        // Initialize custom components
+        // Initialize custom components first
         self.journeyManager = JourneyManager(config: config)
         self.eventProcessor = EventProcessor(config: config)
         self.telemetryExporter = TelemetryExporter(
             endpoint: config.dispatcherEndpoint,
-            headers: config.headers
+            headers: config.headers,
+            bypassSSL: config.environment == "development" // Enable SSL bypass for development
         )
+        
+        // Initialize OpenTelemetry components
+        try setupOpenTelemetry()
         
         // Setup automatic instrumentation
         setupAutomaticInstrumentation()
@@ -101,35 +102,33 @@ public class UnisightTelemetry {
         
         OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
         
-        self.tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationScopeName: "UnisightTelemetry",
+        self.tracer = tracerProvider.get(
+            instrumentationName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
-        // Setup meter provider
-        let metricExporter = OTLPMetricExporter(endpoint: configuration.dispatcherEndpoint)
-        let metricProcessor = MetricReader(
-            exporter: metricExporter,
-            exportInterval: TimeInterval(configuration.metricsExportInterval)
-        )
-        
+        // Setup meter provider (simplified for now)
         self.meterProvider = MeterProviderBuilder()
             .with(resource: resource)
-            .with(reader: metricProcessor)
             .build()
         
-        self.meter = meterProvider.get(instrumentationScopeName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
+        OpenTelemetry.registerMeterProvider(meterProvider: meterProvider)
         
-        // Setup logger provider
-        let logExporter = OTLPLogExporter(endpoint: configuration.dispatcherEndpoint)
-        let logProcessor = BatchLogRecordProcessor(logRecordExporter: logExporter)
+        self.meter = meterProvider.get(
+            instrumentationName: "UnisightTelemetry",
+            instrumentationVersion: "1.0.0"
+        )
         
+        // Setup logger provider (simplified for now)
         self.loggerProvider = LoggerProviderBuilder()
             .with(resource: resource)
-            .with(processor: logProcessor)
             .build()
         
-        self.logger = loggerProvider.get(instrumentationScopeName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
+        OpenTelemetry.registerLoggerProvider(loggerProvider: loggerProvider)
+        
+        self.logger = loggerProvider.get(
+            instrumentationScopeName: "UnisightTelemetry"
+        )
     }
     
     private func setupAutomaticInstrumentation() {
@@ -145,7 +144,8 @@ public class UnisightTelemetry {
             }
         )
         
-        URLSessionInstrumentation(configuration: urlSessionConfig)
+        // Initialize URLSession instrumentation
+        _ = URLSessionInstrumentation(configuration: urlSessionConfig)
     }
     
     private func startSystemMonitoring() {
@@ -176,7 +176,7 @@ public class UnisightTelemetry {
         }
         
         // Monitor accessibility changes
-        if configuration.events.contains(.system(.accessibility)) {
+        if configuration.events.contains(.system(.accessibilityChange)) {
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(accessibilityChanged),
@@ -311,6 +311,8 @@ public class UnisightTelemetry {
         NotificationCenter.default.removeObserver(self)
     }
 }
+
+
 
 // MARK: - AttributeValue Extension
 extension AttributeValue {

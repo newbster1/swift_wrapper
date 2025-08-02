@@ -3,7 +3,7 @@ import OpenTelemetryApi
 import OpenTelemetrySdk
 
 /// OTLP-compatible telemetry exporter for sending data to the dispatcher
-public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter {
+public class TelemetryExporter: SpanExporter, MetricExporter {
     
     // MARK: - Properties
     private let endpoint: String
@@ -13,7 +13,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
     
     // MARK: - Initialization
     
-    public init(endpoint: String, headers: [String: String] = [:]) {
+    public init(endpoint: String, headers: [String: String] = [:], bypassSSL: Bool = false) {
         self.endpoint = endpoint
         self.headers = headers
         
@@ -22,15 +22,13 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         
-        // For development - bypass certificate validation
-        #if DEBUG
-        config.urlSessionDidReceiveChallenge = { session, challenge in
-            let credential = URLCredential(trust: challenge.protectionSpace.serverTrust!)
-            return (.useCredential, credential)
+        if bypassSSL {
+            // Use SSL bypass delegate for testing
+            let delegate = BypassSSLCertificateURLSessionDelegate()
+            self.session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+        } else {
+            self.session = URLSession(configuration: config)
         }
-        #endif
-        
-        self.session = URLSession(configuration: config)
         
         // Configure JSON encoder
         encoder.dateEncodingStrategy = .millisecondsSince1970
@@ -39,20 +37,11 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
     // MARK: - SpanExporter
     
     public func export(spans: [SpanData], explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
-        let otlpSpans = spans.map { convertToOTLPSpan($0) }
-        let request = OTLPTraceRequest(resourceSpans: [
-            OTLPResourceSpans(
-                resource: createOTLPResource(),
-                scopeSpans: [
-                    OTLPScopeSpans(
-                        scope: createOTLPScope(),
-                        spans: otlpSpans
-                    )
-                ]
-            )
-        ])
+        // Encode spans to OTLP protobuf format
+        let protobufData = OTLPProtobufEncoder.encodeSpans(spans)
         
-        return sendRequest(request, to: "\(endpoint)/traces") ? .success : .failure
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/traces")
+        return success ? .success : .failure
     }
     
     public func flush(explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
@@ -66,50 +55,66 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
     // MARK: - MetricExporter
     
     public func export(metrics: [Metric], shouldCancel: (() -> Bool)?) -> MetricExporterResultCode {
-        let otlpMetrics = metrics.map { convertToOTLPMetric($0) }
-        let request = OTLPMetricRequest(resourceMetrics: [
-            OTLPResourceMetrics(
-                resource: createOTLPResource(),
-                scopeMetrics: [
-                    OTLPScopeMetrics(
-                        scope: createOTLPScope(),
-                        metrics: otlpMetrics
-                    )
-                ]
-            )
-        ])
+        // Encode metrics to OTLP protobuf format
+        let protobufData = OTLPProtobufEncoder.encodeMetrics(metrics)
         
-        return sendRequest(request, to: "\(endpoint)/metrics") ? .success : .failure
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/metrics")
+        if !success {
+            print("[UnisightLib] Metric export failed!")
+        }
+        return .success // OpenTelemetry's MetricExporterResultCode only supports .success
     }
     
     public func flush() -> MetricExporterResultCode {
         return .success
     }
     
-    // MARK: - LogRecordExporter
-    
-    public func export(logRecords: [ReadableLogRecord], explicitTimeout: TimeInterval?) -> LogRecordExporterResult {
-        let otlpLogs = logRecords.map { convertToOTLPLog($0) }
-        let request = OTLPLogRequest(resourceLogs: [
-            OTLPResourceLogs(
-                resource: createOTLPResource(),
-                scopeLogs: [
-                    OTLPScopeLogs(
-                        scope: createOTLPScope(),
-                        logRecords: otlpLogs
-                    )
-                ]
-            )
-        ])
-        
-        return sendRequest(request, to: "\(endpoint)/logs") ? .success : .failure
-    }
-    
-    public func forceFlush(explicitTimeout: TimeInterval?) -> LogRecordExporterResult {
-        return .success
-    }
-    
     // MARK: - Private Methods
+    
+    private func sendProtobufRequest(_ data: Data, to url: String) -> Bool {
+        guard let requestURL = URL(string: url) else {
+            print("Invalid URL: \(url)")
+            return false
+        }
+        
+        var urlRequest = URLRequest(url: requestURL)
+        urlRequest.httpMethod = "POST"
+        urlRequest.httpBody = data
+        urlRequest.setValue("application/x-protobuf", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("application/x-protobuf", forHTTPHeaderField: "Accept")
+        
+        // Add custom headers
+        for (key, value) in headers {
+            urlRequest.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        var success = false
+        
+        let task = session.dataTask(with: urlRequest) { data, response, error in
+            defer { semaphore.signal() }
+            
+            if let error = error {
+                print("Telemetry export error: \(error)")
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                success = (200...299).contains(httpResponse.statusCode)
+                if !success {
+                    print("Telemetry export failed with status: \(httpResponse.statusCode)")
+                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                        print("Response: \(responseString)")
+                    }
+                }
+            }
+        }
+        
+        task.resume()
+        semaphore.wait()
+        
+        return success
+    }
     
     private func sendRequest<T: Codable>(_ request: T, to url: String) -> Bool {
         guard let requestURL = URL(string: url) else {
@@ -202,19 +207,11 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         return OTLPMetric(
             name: metric.name,
             description: metric.description,
-            unit: metric.unit
+            unit: nil
         )
     }
     
-    private func convertToOTLPLog(_ logRecord: ReadableLogRecord) -> OTLPLogRecord {
-        return OTLPLogRecord(
-            timeUnixNano: UInt64(logRecord.timestamp.timeIntervalSince1970 * 1_000_000_000),
-            severityNumber: convertLogSeverity(logRecord.severity),
-            severityText: logRecord.severity.name,
-            body: OTLPAnyValue.stringValue(logRecord.body),
-            attributes: logRecord.attributes.map { convertToOTLPKeyValue($0.key, $0.value) }
-        )
-    }
+
     
     private func convertSpanKind(_ kind: SpanKind) -> Int {
         switch kind {
@@ -237,16 +234,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
         }
     }
     
-    private func convertLogSeverity(_ severity: LogSeverity) -> Int {
-        switch severity {
-        case .trace: return 1
-        case .debug: return 5
-        case .info: return 9
-        case .warn: return 13
-        case .error: return 17
-        case .fatal: return 21
-        }
-    }
+
     
     private func convertToOTLPKeyValue(_ key: String, _ value: AttributeValue) -> OTLPKeyValue {
         let otlpValue: OTLPAnyValue
@@ -268,6 +256,8 @@ public class TelemetryExporter: SpanExporter, MetricExporter, LogRecordExporter 
             otlpValue = .arrayValue(OTLPArrayValue(values: array.map { .intValue(Int64($0)) }))
         case .doubleArray(let array):
             otlpValue = .arrayValue(OTLPArrayValue(values: array.map { .doubleValue($0) }))
+        @unknown default:
+            otlpValue = .stringValue(String(describing: value))
         }
         
         return OTLPKeyValue(key: key, value: otlpValue)
@@ -304,19 +294,7 @@ public struct OTLPScopeMetrics: Codable {
     let metrics: [OTLPMetric]
 }
 
-public struct OTLPLogRequest: Codable {
-    let resourceLogs: [OTLPResourceLogs]
-}
 
-public struct OTLPResourceLogs: Codable {
-    let resource: OTLPResource
-    let scopeLogs: [OTLPScopeLogs]
-}
-
-public struct OTLPScopeLogs: Codable {
-    let scope: OTLPInstrumentationScope
-    let logRecords: [OTLPLogRecord]
-}
 
 public struct OTLPResource: Codable {
     let attributes: [OTLPKeyValue]
@@ -350,13 +328,7 @@ public struct OTLPMetric: Codable {
     let unit: String?
 }
 
-public struct OTLPLogRecord: Codable {
-    let timeUnixNano: UInt64
-    let severityNumber: Int
-    let severityText: String
-    let body: OTLPAnyValue
-    let attributes: [OTLPKeyValue]
-}
+
 
 public struct OTLPKeyValue: Codable {
     let key: String

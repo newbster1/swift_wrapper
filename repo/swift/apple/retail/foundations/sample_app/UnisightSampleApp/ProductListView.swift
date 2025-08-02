@@ -115,7 +115,7 @@ struct ProductListView: View {
     
     private func refreshProducts() async {
         TelemetryService.shared.logUserInteraction(
-            .pan,
+            .swipe(.left),
             viewName: "ProductList"
         )
         

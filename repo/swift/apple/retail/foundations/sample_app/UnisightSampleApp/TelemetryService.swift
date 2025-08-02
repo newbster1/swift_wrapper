@@ -19,10 +19,10 @@ class TelemetryService {
                 serviceName: "UnisightSampleApp",
                 version: "1.0.0",
                 environment: "development",
-                dispatcherEndpoint: "https://your-telemetry-endpoint.com/otlp/v1/metrics",
+                dispatcherEndpoint: "https://ref-tel-dis-dev.kbusw2a.shld.apple.com/otlp/v1/metrics",
                 events: EventType.defaultEvents,
                 scheme: .debug,
-                verbosity: .complete,
+                verbosity: .verbose,
                 processing: .consolidate,
                 samplingRate: 1.0
             )
@@ -78,7 +78,7 @@ class TelemetryService {
         )
 
         logEvent(
-            name: "user_\(interaction.eventName)",
+            name: "user_\(interaction.userEventName)",
             category: .user,
             viewContext: viewContext
         )
@@ -171,15 +171,14 @@ class TelemetryService {
     // MARK: - User Context
 
     func setUserContext(userId: String, segment: String? = nil) {
-        let userContext = UserContext(
-            anonymousUserId: userId,
-            userSegment: segment
-        )
-
-        // This would be attached to future events
+        // Log user identification event with user context
         UnisightTelemetry.shared.logEvent(
             name: "user_identified",
-            category: .user
+            category: .user,
+            attributes: [
+                "user_id": userId,
+                "user_segment": segment ?? "unknown"
+            ]
         )
     }
 }

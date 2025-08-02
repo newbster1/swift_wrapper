@@ -13,7 +13,7 @@ public struct DeviceInfo {
         let machineMirror = Mirror(reflecting: systemInfo.machine)
         let identifier = machineMirror.children.reduce("") { identifier, element in
             guard let value = element.value as? Int8, value != 0 else { return identifier }
-            return identifier + String(UnicodeScalar(UInt8(value))!)
+            return identifier + String(UnicodeScalar(UInt8(value)))
         }
         
         return mapToDevice(identifier: identifier)
@@ -250,9 +250,14 @@ public struct DiskInfo {
 /// App state management utilities
 public struct AppStateManager {
     private static var _launchTime = Date()
+    private static var _lastActiveTime = Date()
     
     public static var launchTime: Date {
         return _launchTime
+    }
+    
+    public static var lastActiveTime: Date {
+        return _lastActiveTime
     }
     
     public static var sessionDuration: TimeInterval {
@@ -262,6 +267,7 @@ public struct AppStateManager {
     public static var currentState: String {
         switch UIApplication.shared.applicationState {
         case .active:
+            _lastActiveTime = Date()
             return "active"
         case .inactive:
             return "inactive"
@@ -276,6 +282,9 @@ public struct AppStateManager {
 /// Installation management utilities
 public struct InstallationManager {
     private static let installationIdKey = "UnisightTelemetry.InstallationId"
+    private static let firstLaunchKey = "UnisightTelemetry.FirstLaunch"
+    private static let sessionCountKey = "UnisightTelemetry.SessionCount"
+    private static let installationDateKey = "UnisightTelemetry.InstallationDate"
     
     public static var installationId: String {
         if let existingId = UserDefaults.standard.string(forKey: installationIdKey) {
@@ -285,5 +294,28 @@ public struct InstallationManager {
         let newId = UUID().uuidString
         UserDefaults.standard.set(newId, forKey: installationIdKey)
         return newId
+    }
+    
+    public static var isFirstLaunch: Bool {
+        if UserDefaults.standard.object(forKey: firstLaunchKey) == nil {
+            UserDefaults.standard.set(false, forKey: firstLaunchKey)
+            return true
+        }
+        return false
+    }
+    
+    public static var sessionCount: Int {
+        let count = UserDefaults.standard.integer(forKey: sessionCountKey)
+        UserDefaults.standard.set(count + 1, forKey: sessionCountKey)
+        return count + 1
+    }
+    
+    public static var installationDate: Date {
+        if let date = UserDefaults.standard.object(forKey: installationDateKey) as? Date {
+            return date
+        }
+        let date = Date()
+        UserDefaults.standard.set(date, forKey: installationDateKey)
+        return date
     }
 }

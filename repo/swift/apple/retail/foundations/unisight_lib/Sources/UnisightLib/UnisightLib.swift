@@ -42,56 +42,20 @@ import Foundation
 
 // MARK: - Public API Exports
 
-// Core telemetry functionality
-@_exported import struct UnisightTelemetry
-@_exported import struct UnisightConfiguration
+// Export all public types and symbols
+@_exported import Foundation
+@_exported import UIKit
+#if canImport(SwiftUI)
+@_exported import SwiftUI
+#endif
 
-// Models and data structures
-@_exported import struct TelemetryEvent
-@_exported import struct ViewContext
-@_exported import struct UserContext
-@_exported import struct DeviceContext
-@_exported import struct AppContext
-@_exported import struct AnyCodable
+// Re-export OpenTelemetry types for convenience
+@_exported import OpenTelemetryApi
+@_exported import OpenTelemetrySdk
 
-// Configuration enums and types
-@_exported import enum EventType
-@_exported import enum EventCategory
-@_exported import enum EventScheme
-@_exported import enum EventVerbosity
-@_exported import enum EventProcessing
-@_exported import enum UserEventType
-@_exported import enum SwipeDirection
-@_exported import enum ScreenEventType
-@_exported import enum FunctionalEventType
-@_exported import enum SystemEventType
-@_exported import enum NetworkType
-@_exported import enum RequestType
-
-// Journey management
-@_exported import class JourneyManager
-@_exported import struct JourneySession
-@_exported import struct ScreenTransition
-@_exported import enum NavigationMethod
-@_exported import enum SessionEvent
-
-// Utility classes
-@_exported import struct DeviceInfo
-@_exported import struct NetworkInfo
-@_exported import struct MemoryInfo
-@_exported import struct DiskInfo
-@_exported import struct AppStateManager
-@_exported import struct InstallationManager
-
-// SwiftUI extensions and modifiers (iOS 13.0+)
+// MARK: - SwiftUI Extensions (iOS 13.0+)
 #if canImport(SwiftUI)
 import SwiftUI
-
-@available(iOS 13.0, *)
-@_exported import extension View
-
-@available(iOS 13.0, *)
-@_exported import struct GestureTrackingWrapper
 #endif
 
 // MARK: - Library Information
@@ -171,10 +135,10 @@ public struct UnisightLib {
                 .functional(.network(.response(.foreground))),
                 
                 // System
-                .system(.foreground),
-                .system(.background),
-                .system(.battery(0.1)),
-                .system(.accessibility)
+                            .system(.foreground),
+            .system(.background),
+            .system(.battery(0.1)),
+            .system(.accessibilityChange)
             ],
             scheme: .production,
             verbosity: .discrete,
@@ -204,7 +168,7 @@ public struct UnisightLib {
             dispatcherEndpoint: dispatcherEndpoint,
             events: EventType.defaultEvents,
             scheme: .debug,
-            verbosity: .complete,
+            verbosity: .verbose,
             processing: .none,
             usesBatchProcessor: false,
             metricsExportInterval: 5,
@@ -240,14 +204,14 @@ public extension UnisightTelemetry {
         attributes: [String: Any] = [:]
     ) {
         var eventAttributes = attributes
-        eventAttributes["interaction_type"] = interaction.eventName
+        eventAttributes["interaction_type"] = interaction.userEventName
         eventAttributes["view_name"] = viewName
         if let elementId = elementId {
             eventAttributes["element_id"] = elementId
         }
         
         logEvent(
-            name: "user_\(interaction.eventName)",
+            name: "user_\(interaction.userEventName)",
             category: .user,
             attributes: eventAttributes
         )
@@ -285,7 +249,7 @@ public extension UnisightTelemetry {
         }
         
         logEvent(
-            name: "system_\(event)",
+            name: "system_\(event.systemEventName)",
             category: .system,
             attributes: eventAttributes
         )

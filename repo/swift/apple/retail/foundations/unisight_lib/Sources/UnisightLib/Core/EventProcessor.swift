@@ -39,6 +39,8 @@ public class EventProcessor {
             consolidateEvent(event)
         case .none:
             processEventImmediately(event)
+        case .batch:
+            consolidateEvent(event)
         }
     }
     
@@ -142,16 +144,8 @@ public class EventProcessor {
         
         span.end()
         
-        // Log consolidated event
-        UnisightTelemetry.shared.getLogger().log(
-            text: "Consolidated event: \(consolidatedEvent.baseEvent.name)",
-            severity: .info,
-            attributes: [
-                "event_count": AttributeValue.int(consolidatedEvent.eventCount),
-                "category": AttributeValue.string(consolidatedEvent.baseEvent.category.rawValue),
-                "time_span": AttributeValue.double(consolidatedEvent.timeSpan)
-            ]
-        )
+        // Log consolidated event using simple logging
+        print("[UnisightLib] Consolidated event: \(consolidatedEvent.baseEvent.name) - Count: \(consolidatedEvent.eventCount), Category: \(consolidatedEvent.baseEvent.category.rawValue), TimeSpan: \(consolidatedEvent.timeSpan)")
     }
     
     private func createSpanForEvent(_ event: TelemetryEvent) {
@@ -188,38 +182,30 @@ public class EventProcessor {
     }
     
     private func logEvent(_ event: TelemetryEvent) {
-        let logger = UnisightTelemetry.shared.getLogger()
-        
-        var logAttributes: [String: AttributeValue] = [
-            "event_id": AttributeValue.string(event.id),
-            "category": AttributeValue.string(event.category.rawValue),
-            "session_id": AttributeValue.string(event.sessionId)
-        ]
-        
-        // Add event attributes
-        for (key, value) in event.attributes {
-            logAttributes[key] = AttributeValue.fromAny(value.value)
-        }
-        
-        // Determine log severity based on event category
-        let severity: LogSeverity = {
+        // Determine log level based on event category
+        let logLevel: String = {
             switch event.category {
             case .system:
-                return .info
+                return "INFO"
             case .user, .navigation:
-                return .debug
+                return "DEBUG"
             case .functional:
-                return .info
+                return "INFO"
             case .custom:
-                return .debug
+                return "DEBUG"
             }
         }()
         
-        logger.log(
-            text: "Event: \(event.name)",
-            severity: severity,
-            attributes: logAttributes
-        )
+        // Create log message
+        var logMessage = "[UnisightLib] [\(logLevel)] Event: \(event.name) - Category: \(event.category.rawValue), Session: \(event.sessionId)"
+        
+        // Add event attributes to log message
+        if !event.attributes.isEmpty {
+            let attributesString = event.attributes.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
+            logMessage += " - Attributes: {\(attributesString)}"
+        }
+        
+        print(logMessage)
     }
     
     private func recordMetricsForEvent(_ event: TelemetryEvent) {
@@ -229,27 +215,27 @@ public class EventProcessor {
         let eventCounter = meter.createIntCounter(name: "events_total")
         eventCounter.add(
             value: 1,
-            attributes: [
+            labels: [
                 "category": event.category.rawValue,
                 "event_name": event.name
             ]
         )
         
         // Record session metrics
-        let sessionDuration = meter.createDoubleHistogram(name: "session_duration")
+        let sessionDuration = meter.createDoubleHistogram(name: "session_duration", explicitBoundaries: nil, absolute: false)
         if let journeyManager = JourneyManager.shared {
             sessionDuration.record(
                 value: journeyManager.getSessionDuration(),
-                attributes: ["session_id": event.sessionId]
+                labels: ["session_id": event.sessionId]
             )
         }
         
         // Record screen time metrics if available
         if event.category == .navigation, let timeOnScreen = event.timeOnScreen {
-            let screenTimeHistogram = meter.createDoubleHistogram(name: "screen_time")
+            let screenTimeHistogram = meter.createDoubleHistogram(name: "screen_time", explicitBoundaries: nil, absolute: false)
             screenTimeHistogram.record(
                 value: timeOnScreen,
-                attributes: [
+                labels: [
                     "screen_name": event.previousScreen ?? "unknown"
                 ]
             )
