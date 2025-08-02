@@ -37,20 +37,10 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - SpanExporter
     
     public func export(spans: [SpanData], explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
-        let otlpSpans = spans.map { convertToOTLPSpan($0) }
-        let request = OTLPTraceRequest(resourceSpans: [
-            OTLPResourceSpans(
-                resource: createOTLPResource(),
-                scopeSpans: [
-                    OTLPScopeSpans(
-                        scope: createOTLPScope(),
-                        spans: otlpSpans
-                    )
-                ]
-            )
-        ])
+        // Encode spans to OTLP protobuf format
+        let protobufData = OTLPProtobufEncoder.encodeSpans(spans)
         
-        let success = sendRequest(request, to: "\(endpoint)/traces")
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/traces")
         return success ? .success : .failure
     }
     
@@ -65,20 +55,10 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - MetricExporter
     
     public func export(metrics: [Metric], shouldCancel: (() -> Bool)?) -> MetricExporterResultCode {
-        let otlpMetrics = metrics.map { convertToOTLPMetric($0) }
-        let request = OTLPMetricRequest(resourceMetrics: [
-            OTLPResourceMetrics(
-                resource: createOTLPResource(),
-                scopeMetrics: [
-                    OTLPScopeMetrics(
-                        scope: createOTLPScope(),
-                        metrics: otlpMetrics
-                    )
-                ]
-            )
-        ])
-
-        let success = sendRequest(request, to: "\(endpoint)/metrics")
+        // Encode metrics to OTLP protobuf format
+        let protobufData = OTLPProtobufEncoder.encodeMetrics(metrics)
+        
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/metrics")
         if !success {
             print("[UnisightLib] Metric export failed!")
         }
@@ -90,6 +70,51 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
     }
     
     // MARK: - Private Methods
+    
+    private func sendProtobufRequest(_ data: Data, to url: String) -> Bool {
+        guard let requestURL = URL(string: url) else {
+            print("Invalid URL: \(url)")
+            return false
+        }
+        
+        var urlRequest = URLRequest(url: requestURL)
+        urlRequest.httpMethod = "POST"
+        urlRequest.httpBody = data
+        urlRequest.setValue("application/x-protobuf", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("application/x-protobuf", forHTTPHeaderField: "Accept")
+        
+        // Add custom headers
+        for (key, value) in headers {
+            urlRequest.setValue(value, forHTTPHeaderField: key)
+        }
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        var success = false
+        
+        let task = session.dataTask(with: urlRequest) { data, response, error in
+            defer { semaphore.signal() }
+            
+            if let error = error {
+                print("Telemetry export error: \(error)")
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                success = (200...299).contains(httpResponse.statusCode)
+                if !success {
+                    print("Telemetry export failed with status: \(httpResponse.statusCode)")
+                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                        print("Response: \(responseString)")
+                    }
+                }
+            }
+        }
+        
+        task.resume()
+        semaphore.wait()
+        
+        return success
+    }
     
     private func sendRequest<T: Codable>(_ request: T, to url: String) -> Bool {
         guard let requestURL = URL(string: url) else {
