@@ -255,7 +255,7 @@ func setUserContext(userId: String, segment: String? = nil) {
 ### 10. DeviceInfo Conflict Resolution (Sample App)
 **Issues Fixed:**
 - **DeviceInfo Scope Conflict**: Removed duplicate DeviceInfo struct from sample app that was conflicting with UnisightLib's DeviceInfo
-- **Build Cache Issues**: Resolved compilation errors caused by duplicate type definitions
+- **Build Cache Issues**: Resolved compilation errors caused by duplicate type definitions and stale build cache
 
 **Changes:**
 ```swift
@@ -271,6 +271,18 @@ struct DeviceInfo { ... }  // ❌ Duplicate definition
 - Deleted `DeviceInfoExtensions.swift` from sample app
 - Sample app now uses `DeviceInfo` from UnisightLib
 - Eliminates type conflicts and build cache issues
+- Cleaned build cache to resolve stale compilation errors
+
+**Build Cache Cleaning:**
+```bash
+# Removed Xcode build artifacts
+rm -rf UnisightSampleApp.xcodeproj/project.xcworkspace/xcuserdata
+rm -rf ~/Library/Developer/Xcode/DerivedData/*UnisightSampleApp*
+
+# Removed Swift Package Manager cache
+rm -rf .build
+rm -rf *.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+```
 
 ## 🏗️ Architecture Improvements
 
