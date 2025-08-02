@@ -157,6 +157,52 @@ self.meter = meterProvider.get(
 )
 ```
 
+### 8. GestureTrackingModifiers.swift
+**Issues Fixed:**
+- **UserEventType References**: Fixed `.pan` to `.swipe(.left)` and `.rotate` to `.rotation` to match enum definitions
+- **CGSize Properties**: Fixed `value.translation.x` and `value.velocity.x` to use `width`/`height` instead of `x`/`y`
+- **iOS 17.0+ API**: Fixed `onChange(of:initial:_:)` to use iOS 13.0+ compatible `onChange(of:_:)` syntax
+- **Generic Parameter Inference**: Fixed callback parameter issues by removing `oldValue` references
+- **ViewContext Parameter**: Removed `viewContext` parameter from `logEvent` calls as it's not supported
+- **Unused ViewContext**: Removed ViewContext creation and simplified to use attributes directly
+
+**Changes:**
+```swift
+// Fixed UserEventType references
+trackUserInteraction(type: .swipe(.left), ...)  // ✅ Fixed from .pan
+trackUserInteraction(type: .rotation, ...)      // ✅ Fixed from .rotate
+
+// Fixed CGSize properties
+"translation": "\(value.translation.width),\(value.translation.height)"  // ✅ Fixed from .x/.y
+"velocity": "\(value.velocity.width),\(value.velocity.height)"          // ✅ Fixed from .x/.y
+
+// Fixed iOS 17.0+ onChange API
+self.onChange(of: value) { newValue in  // ✅ Fixed from { oldValue, newValue in
+    // Use only newValue
+}
+
+// Fixed logEvent calls
+UnisightTelemetry.shared.logEvent(
+    name: eventName,
+    category: .user,
+    attributes: attributes  // ✅ Removed viewContext parameter
+)
+
+// Simplified attribute handling
+var attributes: [String: Any] = [
+    "interaction_type": type.userEventName,
+    "view_name": viewName,
+    "element_id": elementId ?? "",
+    "element_type": elementType ?? "",
+    "element_label": elementLabel ?? ""
+]
+
+// Add coordinates if available
+if let coordinates = coordinates {
+    attributes["coordinates"] = "\(coordinates.x),\(coordinates.y)"
+}
+```
+
 ## 🏗️ Architecture Improvements
 
 ### OpenTelemetry Integration

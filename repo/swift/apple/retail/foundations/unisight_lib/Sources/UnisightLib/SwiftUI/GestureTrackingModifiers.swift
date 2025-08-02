@@ -79,15 +79,15 @@ public extension View {
             DragGesture()
                 .onEnded { value in
                     trackUserInteraction(
-                        type: .pan,
+                        type: .swipe(.left),
                         viewName: viewName,
                         elementId: elementId,
                         coordinates: value.location,
                         gestureProperties: [
                             "start_location": "\(value.startLocation.x),\(value.startLocation.y)",
                             "end_location": "\(value.location.x),\(value.location.y)",
-                            "translation": "\(value.translation.x),\(value.translation.y)",
-                            "velocity": "\(value.velocity.x),\(value.velocity.y)"
+                            "translation": "\(value.translation.width),\(value.translation.height)",
+                            "velocity": "\(value.velocity.width),\(value.velocity.height)"
                         ]
                     )
                     onDragEnded?(value)
@@ -131,7 +131,7 @@ public extension View {
             RotationGesture()
                 .onEnded { value in
                     trackUserInteraction(
-                        type: .rotate,
+                        type: .rotation,
                         viewName: viewName,
                         elementId: elementId,
                         gestureProperties: [
@@ -153,13 +153,12 @@ public extension View {
         value: T,
         onChanged: ((T) -> Void)? = nil
     ) -> some View {
-        self.onChange(of: value) { oldValue, newValue in
+        self.onChange(of: value) { newValue in
             trackUserInteraction(
                 type: .entry,
                 viewName: viewName,
                 elementId: elementId,
                 inputValues: [
-                    "old_value": String(describing: oldValue),
                     "new_value": String(describing: newValue)
                 ]
             )
@@ -176,13 +175,12 @@ public extension View {
         selection: T,
         onSelectionChanged: ((T) -> Void)? = nil
     ) -> some View {
-        self.onChange(of: selection) { oldValue, newValue in
+        self.onChange(of: selection) { newValue in
             trackUserInteraction(
                 type: .selection,
                 viewName: viewName,
                 elementId: elementId,
                 inputValues: [
-                    "previous_selection": String(describing: oldValue),
                     "new_selection": String(describing: newValue)
                 ]
             )
@@ -276,17 +274,16 @@ public extension View {
         state: T,
         onStateChanged: ((T, T) -> Void)? = nil
     ) -> some View {
-        self.onChange(of: state) { oldValue, newValue in
+        self.onChange(of: state) { newValue in
             UnisightTelemetry.shared.logEvent(
                 name: "view_state_changed",
                 category: .user,
                 attributes: [
                     "view_name": viewName,
-                    "previous_state": String(describing: oldValue),
                     "new_state": String(describing: newValue)
                 ]
             )
-            onStateChanged?(oldValue, newValue)
+            onStateChanged?(newValue, newValue)
         }
     }
     
@@ -327,29 +324,39 @@ extension View {
         gestureProperties: [String: Any]? = nil,
         inputValues: [String: Any]? = nil
     ) {
-        let viewContext = ViewContext(
-            viewName: viewName,
-            elementIdentifier: elementId,
-            elementType: elementType,
-            elementLabel: elementLabel,
-            coordinates: coordinates,
-            gestureProperties: gestureProperties,
-            inputValues: inputValues
-        )
-        
         let eventName = "user_\(type.userEventName)"
+        
+        var attributes: [String: Any] = [
+            "interaction_type": type.userEventName,
+            "view_name": viewName,
+            "element_id": elementId ?? "",
+            "element_type": elementType ?? "",
+            "element_label": elementLabel ?? ""
+        ]
+        
+        // Add coordinates if available
+        if let coordinates = coordinates {
+            attributes["coordinates"] = "\(coordinates.x),\(coordinates.y)"
+        }
+        
+        // Add gesture properties if available
+        if let gestureProperties = gestureProperties {
+            for (key, value) in gestureProperties {
+                attributes["gesture_\(key)"] = value
+            }
+        }
+        
+        // Add input values if available
+        if let inputValues = inputValues {
+            for (key, value) in inputValues {
+                attributes["input_\(key)"] = value
+            }
+        }
         
         UnisightTelemetry.shared.logEvent(
             name: eventName,
             category: .user,
-            attributes: [
-                "interaction_type": type.userEventName,
-                "view_name": viewName,
-                "element_id": elementId ?? "",
-                "element_type": elementType ?? "",
-                "element_label": elementLabel ?? ""
-            ],
-            viewContext: viewContext
+            attributes: attributes
         )
     }
 }
@@ -491,17 +498,21 @@ public struct GestureTrackingWrapper<Content: View>: UIViewRepresentable {
             location: CGPoint,
             properties: [String: Any] = [:]
         ) {
-            let viewContext = ViewContext(
-                viewName: viewName,
-                elementIdentifier: elementId,
-                coordinates: location,
-                gestureProperties: properties
-            )
+            var attributes: [String: Any] = [
+                "view_name": viewName,
+                "element_id": elementId ?? "",
+                "coordinates": "\(location.x),\(location.y)"
+            ]
+            
+            // Add gesture properties
+            for (key, value) in properties {
+                attributes["gesture_\(key)"] = value
+            }
             
             UnisightTelemetry.shared.logEvent(
                 name: "user_\(type.userEventName)",
                 category: .user,
-                viewContext: viewContext
+                attributes: attributes
             )
         }
     }
