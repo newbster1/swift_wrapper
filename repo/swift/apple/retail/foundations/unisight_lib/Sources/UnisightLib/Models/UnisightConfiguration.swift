@@ -110,7 +110,7 @@ public enum UserEventType: Hashable {
     case rotation
     case custom(String)
     
-    var userEventName: String {
+    public var userEventName: String {
         switch self {
         case .tap:
             return "tap"

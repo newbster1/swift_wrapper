@@ -171,15 +171,14 @@ class TelemetryService {
     // MARK: - User Context
 
     func setUserContext(userId: String, segment: String? = nil) {
-        let userContext = UserContext(
-            anonymousUserId: userId,
-            userSegment: segment
-        )
-
-        // This would be attached to future events
+        // Log user identification event with user context
         UnisightTelemetry.shared.logEvent(
             name: "user_identified",
-            category: .user
+            category: .user,
+            attributes: [
+                "user_id": userId,
+                "user_segment": segment ?? "unknown"
+            ]
         )
     }
 }

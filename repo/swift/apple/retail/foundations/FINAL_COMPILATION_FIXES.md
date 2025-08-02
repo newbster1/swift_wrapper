@@ -222,6 +222,36 @@ private func trackTapGestureIfNeeded(...) -> some View {
 }
 ```
 
+### 9. TelemetryService.swift (Sample App)
+**Issues Fixed:**
+- **userEventName Access**: Made `userEventName` property public in `UserEventType` enum
+- **setUserContext Method**: Removed non-existent `setUserContext` method call and simplified to use `logEvent` with attributes
+
+**Changes:**
+```swift
+// Fixed userEventName access
+public var userEventName: String {  // ✅ Made public
+    switch self {
+    case .tap: return "tap"
+    case .longPress: return "long_press"
+    // ... other cases
+    }
+}
+
+// Fixed setUserContext method
+func setUserContext(userId: String, segment: String? = nil) {
+    // Log user identification event with user context
+    UnisightTelemetry.shared.logEvent(
+        name: "user_identified",
+        category: .user,
+        attributes: [
+            "user_id": userId,
+            "user_segment": segment ?? "unknown"
+        ]
+    )
+}
+```
+
 ## 🏗️ Architecture Improvements
 
 ### OpenTelemetry Integration
