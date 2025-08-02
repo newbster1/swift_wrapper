@@ -107,6 +107,29 @@ public enum UserEventType: Hashable {
     case anyGesture
     case selection
     case entry
+    
+    public var eventName: String {
+        switch self {
+        case .tap:
+            return "tap"
+        case .swipe(let direction):
+            return "swipe_\(direction.rawValue)"
+        case .rotate:
+            return "rotate"
+        case .pinch:
+            return "pinch"
+        case .pan:
+            return "pan"
+        case .longPress:
+            return "long_press"
+        case .anyGesture:
+            return "gesture"
+        case .selection:
+            return "selection"
+        case .entry:
+            return "entry"
+        }
+    }
 }
 
 public enum SwipeDirection: String, CaseIterable, Hashable {

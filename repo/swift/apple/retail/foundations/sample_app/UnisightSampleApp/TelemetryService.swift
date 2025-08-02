@@ -1,134 +1,185 @@
 import Foundation
+import UnisightLib
 
-/// Simple telemetry service wrapper for the sample app
-/// This demonstrates how to integrate UnisightLib in a real application
 class TelemetryService {
     static let shared = TelemetryService()
-    
+
     private var isInitialized = false
-    
+
     private init() {}
-    
+
     func initialize() {
         guard !isInitialized else {
             print("TelemetryService is already initialized")
             return
         }
-        
+
         do {
-            // For this sample, we'll create a simple configuration
-            // In a real app, you would load these from configuration files or environment
-            let config = createSampleConfiguration()
-            
-            // Initialize UnisightLib with the configuration
-            // try UnisightLib.initialize(with: config)
-            
-            print("✅ Telemetry initialized successfully")
-            print("📊 Dispatcher endpoint: \(config.dispatcherEndpoint)")
-            print("🔧 Environment: \(config.environment)")
-            
+            let config = UnisightConfiguration(
+                serviceName: "UnisightSampleApp",
+                version: "1.0.0",
+                environment: "development",
+                dispatcherEndpoint: "https://your-telemetry-endpoint.com/otlp/v1/metrics",
+                events: EventType.defaultEvents,
+                scheme: .debug,
+                verbosity: .complete,
+                processing: .consolidate,
+                samplingRate: 1.0
+            )
+
+            try UnisightTelemetry.shared.initialize(with: config)
             isInitialized = true
-            
+
+            // Start a new session
+            UnisightTelemetry.shared.startNewSession()
+
+            print("✅ Telemetry initialized successfully")
+
         } catch {
             print("❌ Failed to initialize telemetry: \(error)")
         }
     }
-    
-    private func createSampleConfiguration() -> SampleConfiguration {
-        return SampleConfiguration(
-            serviceName: "UnisightSampleApp",
-            version: "1.0.0",
-            environment: "development",
-            dispatcherEndpoint: "https://ref-tel-dis-dev.kbusw2a.shld.apple.com/otlp/v1/metrics"
-        )
-    }
-    
+
     // MARK: - Event Logging Methods
-    
-    func logEvent(name: String, category: EventCategory, attributes: [String: Any] = [:]) {
+
+    func logEvent(
+        name: String,
+        category: EventCategory,
+        attributes: [String: Any] = [:],
+        viewContext: ViewContext? = nil,
+        userContext: UserContext? = nil
+    ) {
         guard isInitialized else {
             print("⚠️ Telemetry not initialized. Event '\(name)' not logged.")
             return
         }
-        
-        // For demo purposes, we'll just print the events
-        // In the real implementation, this would call UnisightTelemetry.shared.logEvent
-        print("📝 Event: \(name)")
-        print("   Category: \(category.rawValue)")
-        if !attributes.isEmpty {
-            print("   Attributes: \(attributes)")
-        }
-        
-        // UnisightTelemetry.shared.logEvent(name: name, category: category, attributes: attributes)
+
+        UnisightTelemetry.shared.logEvent(
+            name: name,
+            category: category,
+            attributes: attributes
+        )
     }
-    
-    func logUserInteraction(_ interaction: String, viewName: String, elementId: String? = nil) {
-        var attributes: [String: Any] = [
-            "interaction_type": interaction,
-            "view_name": viewName
-        ]
-        
-        if let elementId = elementId {
-            attributes["element_id"] = elementId
-        }
-        
-        logEvent(name: "user_interaction", category: .user, attributes: attributes)
-    }
-    
-    func logNavigation(from: String?, to: String) {
+
+    func logUserInteraction(
+        _ interaction: UserEventType,
+        viewName: String,
+        elementId: String? = nil,
+        elementType: String? = nil,
+        elementLabel: String? = nil,
+        coordinates: CGPoint? = nil
+    ) {
+        let viewContext = ViewContext(
+            viewName: viewName,
+            elementIdentifier: elementId,
+            elementType: elementType,
+            elementLabel: elementLabel,
+            coordinates: coordinates
+        )
+
         logEvent(
-            name: "navigation",
-            category: .navigation,
-            attributes: [
-                "from_screen": from ?? "unknown",
-                "to_screen": to
-            ]
+            name: "user_\(interaction.eventName)",
+            category: .user,
+            viewContext: viewContext
         )
     }
     
-    func logNetworkRequest(url: String, method: String, statusCode: Int? = nil) {
+    // Backward compatibility method for string-based interactions
+    func logUserInteraction(
+        _ interaction: String,
+        viewName: String,
+        elementId: String? = nil,
+        elementType: String? = nil,
+        elementLabel: String? = nil,
+        coordinates: CGPoint? = nil
+    ) {
+        let viewContext = ViewContext(
+            viewName: viewName,
+            elementIdentifier: elementId,
+            elementType: elementType,
+            elementLabel: elementLabel,
+            coordinates: coordinates
+        )
+
+        logEvent(
+            name: "user_\(interaction)",
+            category: .user,
+            viewContext: viewContext
+        )
+    }
+
+    func logNavigation(
+        from: String?,
+        to: String,
+        method: NavigationMethod = .unknown,
+        deepLink: String? = nil
+    ) {
+        JourneyManager.shared?.trackScreenTransition(
+            from: from,
+            to: to,
+            method: method,
+            deepLink: deepLink
+        )
+    }
+
+    func logScreenAppeared(_ screenName: String) {
+        JourneyManager.shared?.trackScreenAppeared(screenName)
+    }
+
+    func logScreenDisappeared(_ screenName: String) {
+        JourneyManager.shared?.trackScreenDisappeared(screenName)
+    }
+
+    func logNetworkRequest(
+        url: String,
+        method: String,
+        statusCode: Int? = nil,
+        duration: TimeInterval? = nil,
+        payloadSize: Int? = nil
+    ) {
         var attributes: [String: Any] = [
             "url": url,
             "method": method
         ]
-        
+
         if let statusCode = statusCode {
             attributes["status_code"] = statusCode
         }
-        
+        if let duration = duration {
+            attributes["duration"] = duration
+        }
+        if let payloadSize = payloadSize {
+            attributes["payload_size"] = payloadSize
+        }
+
         logEvent(name: "network_request", category: .functional, attributes: attributes)
     }
-    
+
     func logError(_ error: Error, context: String? = nil) {
         var attributes: [String: Any] = [
-            "error_description": error.localizedDescription
+            "error_description": error.localizedDescription,
+            "error_type": String(describing: type(of: error))
         ]
-        
+
         if let context = context {
             attributes["context"] = context
         }
-        
+
         logEvent(name: "error", category: .system, attributes: attributes)
     }
-}
 
-// MARK: - Sample Configuration
+    // MARK: - User Context
 
-/// Sample configuration structure for demo purposes
-/// In the real implementation, this would use UnisightConfiguration
-struct SampleConfiguration {
-    let serviceName: String
-    let version: String
-    let environment: String
-    let dispatcherEndpoint: String
-}
+    func setUserContext(userId: String, segment: String? = nil) {
+        let userContext = UserContext(
+            anonymousUserId: userId,
+            userSegment: segment
+        )
 
-// MARK: - Event Categories
-
-enum EventCategory: String, CaseIterable {
-    case user = "user"
-    case navigation = "navigation"
-    case system = "system"
-    case functional = "functional"
-    case custom = "custom"
+        // This would be attached to future events
+        UnisightTelemetry.shared.logEvent(
+            name: "user_identified",
+            category: .user
+        )
+    }
 }

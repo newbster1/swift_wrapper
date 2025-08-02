@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 /// Represents a telemetry event with all associated metadata
 public struct TelemetryEvent: Codable {

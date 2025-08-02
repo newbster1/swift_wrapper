@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import OpenTelemetryApi
 import OpenTelemetrySdk
 import ResourceExtension
@@ -74,9 +75,9 @@ public class UnisightTelemetry {
         // Create resource
         let resource = Resource(
             attributes: [
-                ResourceAttributes.serviceName: AttributeValue.string(configuration.serviceName),
-                ResourceAttributes.serviceVersion: AttributeValue.string(configuration.version),
-                ResourceAttributes.deploymentEnvironment: AttributeValue.string(configuration.environment),
+                "service.name": AttributeValue.string(configuration.serviceName),
+                "service.version": AttributeValue.string(configuration.version),
+                "deployment.environment": AttributeValue.string(configuration.environment),
                 "session.id": AttributeValue.string(sessionId),
                 "device.model": AttributeValue.string(DeviceInfo.model),
                 "os.name": AttributeValue.string(DeviceInfo.osName),
@@ -86,9 +87,12 @@ public class UnisightTelemetry {
         )
         
         // Setup tracer provider
-        let spanProcessor = configuration.usesBatchProcessor 
-            ? BatchSpanProcessor(spanExporter: telemetryExporter)
-            : SimpleSpanProcessor(spanExporter: telemetryExporter)
+        let spanProcessor: SpanProcessor
+        if configuration.usesBatchProcessor {
+            spanProcessor = BatchSpanProcessor(spanExporter: telemetryExporter)
+        } else {
+            spanProcessor = SimpleSpanProcessor(spanExporter: telemetryExporter)
+        }
         
         let tracerProvider = TracerProviderBuilder()
             .add(spanProcessor: spanProcessor)
@@ -98,43 +102,43 @@ public class UnisightTelemetry {
         OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
         
         self.tracer = OpenTelemetry.instance.tracerProvider.get(
-            instrumentationName: "UnisightTelemetry",
+            instrumentationScopeName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
         // Setup meter provider
         let metricExporter = OTLPMetricExporter(endpoint: configuration.dispatcherEndpoint)
-        let metricProcessor = PeriodicMetricReader(
+        let metricProcessor = MetricReader(
             exporter: metricExporter,
             exportInterval: TimeInterval(configuration.metricsExportInterval)
         )
         
         self.meterProvider = MeterProviderBuilder()
             .with(resource: resource)
-            .registerMetricReader(metricProcessor)
+            .with(reader: metricProcessor)
             .build()
         
-        self.meter = meterProvider.get(instrumentationName: "UnisightTelemetry")
+        self.meter = meterProvider.get(instrumentationScopeName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
         
         // Setup logger provider
         let logExporter = OTLPLogExporter(endpoint: configuration.dispatcherEndpoint)
-        let logProcessor = BatchLogRecordProcessor(exporter: logExporter)
+        let logProcessor = BatchLogRecordProcessor(logRecordExporter: logExporter)
         
         self.loggerProvider = LoggerProviderBuilder()
             .with(resource: resource)
-            .add(processor: logProcessor)
+            .with(processor: logProcessor)
             .build()
         
-        self.logger = loggerProvider.get(instrumentationName: "UnisightTelemetry")
+        self.logger = loggerProvider.get(instrumentationScopeName: "UnisightTelemetry", instrumentationVersion: "1.0.0")
     }
     
     private func setupAutomaticInstrumentation() {
         // Setup URLSession instrumentation
         let urlSessionConfig = URLSessionInstrumentationConfiguration(
-            shouldRecordPayload: { _ in configuration.shouldRecordPayloads },
+            shouldRecordPayload: { _ in self.configuration.shouldRecordPayloads },
             shouldInstrument: { request in
                 // Don't instrument our own telemetry requests
-                !request.url?.absoluteString.contains(configuration.dispatcherEndpoint) ?? true
+                !(request.url?.absoluteString.contains(self.configuration.dispatcherEndpoint) ?? false)
             },
             nameSpan: { request in
                 return "\(request.httpMethod ?? "GET") \(request.url?.path ?? "unknown")"
@@ -176,7 +180,7 @@ public class UnisightTelemetry {
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(accessibilityChanged),
-                name: UIAccessibility.notificationName,
+                name: UIAccessibility.voiceOverStatusDidChangeNotification,
                 object: nil
             )
         }
@@ -238,10 +242,10 @@ public class UnisightTelemetry {
     public func recordMetric(
         name: String,
         value: Double,
-        attributes: [String: String] = [:]
+        labels: [String: String] = [:]
     ) {
         let counter = meter.createDoubleCounter(name: name)
-        counter.add(value: value, attributes: attributes)
+        counter.add(value: value, labels: labels)
     }
     
     /// Get the current tracer
