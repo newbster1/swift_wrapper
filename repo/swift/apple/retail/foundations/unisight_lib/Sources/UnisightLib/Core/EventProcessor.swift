@@ -229,7 +229,7 @@ public class EventProcessor {
         let eventCounter = meter.createIntCounter(name: "events_total")
         eventCounter.add(
             value: 1,
-            attributes: [
+            labels: [
                 "category": event.category.rawValue,
                 "event_name": event.name
             ]
@@ -240,7 +240,7 @@ public class EventProcessor {
         if let journeyManager = JourneyManager.shared {
             sessionDuration.record(
                 value: journeyManager.getSessionDuration(),
-                attributes: ["session_id": event.sessionId]
+                labels: ["session_id": event.sessionId]
             )
         }
         
@@ -249,7 +249,7 @@ public class EventProcessor {
             let screenTimeHistogram = meter.createDoubleHistogram(name: "screen_time")
             screenTimeHistogram.record(
                 value: timeOnScreen,
-                attributes: [
+                labels: [
                     "screen_name": event.previousScreen ?? "unknown"
                 ]
             )

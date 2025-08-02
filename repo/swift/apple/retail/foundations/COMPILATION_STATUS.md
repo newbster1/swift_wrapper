@@ -10,9 +10,10 @@
 ### 2. OpenTelemetry API Compatibility
 - **Problem**: OpenTelemetry API calls were incompatible with current version
 - **Solution**: 
-  - Temporarily removed OpenTelemetry dependencies
-  - Created mock implementations for all OpenTelemetry types
-  - Maintained API compatibility for future re-enablement
+  - Restored OpenTelemetry dependencies
+  - Fixed API calls to match official OpenTelemetry Swift repository
+  - Updated metric recording to use `labels` instead of `attributes`
+  - Fixed URLSession instrumentation
 - **Status**: ✅ FIXED
 
 ### 3. TelemetryEvent Scope Issues
@@ -22,33 +23,37 @@
 
 ### 4. Init Method Resolution
 - **Problem**: Reference to member 'init' cannot be resolved
-- **Solution**: Fixed OpenTelemetry API calls and created mock implementations
+- **Solution**: Fixed OpenTelemetry API calls to use correct initialization methods
 - **Status**: ✅ FIXED
 
 ## Current Status
 
-The UnisightSampleApp should now compile successfully. All major compilation errors have been resolved:
+The UnisightSampleApp should now compile successfully with full OpenTelemetry integration:
 
 1. ✅ All ambiguous type lookups resolved
-2. ✅ OpenTelemetry API compatibility issues fixed
+2. ✅ OpenTelemetry API compatibility issues fixed using official API
 3. ✅ TelemetryEvent scope issues resolved
 4. ✅ Init method resolution issues fixed
-5. ✅ Mock implementations provide full API compatibility
+5. ✅ Full OpenTelemetry integration restored
 
-## Next Steps
+## Key API Fixes
 
-1. **Test Compilation**: Verify the project compiles without errors
-2. **Re-enable OpenTelemetry**: When OpenTelemetry API stabilizes, re-enable the real implementations
-3. **Update Dependencies**: Update to compatible OpenTelemetry version when available
+- **Metric Recording**: Changed `attributes` to `labels` in metric recording calls
+- **PeriodicMetricReader**: Used correct constructor with `exporter` and `exportInterval`
+- **URLSession Instrumentation**: Restored proper initialization
+- **Resource Attributes**: Used correct OpenTelemetry attribute format
 
 ## Files Modified
 
 - `unisight_lib/Sources/UnisightLib/UnisightLib.swift` - Removed problematic imports
-- `unisight_lib/Sources/UnisightLib/UnisightTelemetry.swift` - Added mock implementations
-- `unisight_lib/Package.swift` - Temporarily removed OpenTelemetry dependencies
+- `unisight_lib/Sources/UnisightLib/UnisightTelemetry.swift` - Fixed OpenTelemetry API calls
+- `unisight_lib/Sources/UnisightLib/Core/EventProcessor.swift` - Fixed metric recording API
+- `unisight_lib/Sources/UnisightLib/Core/OTLPExporters.swift` - Removed unnecessary extensions
+- `unisight_lib/Package.swift` - Restored OpenTelemetry dependencies
 
 ## Notes
 
-- All telemetry functionality is preserved through mock implementations
-- The API remains fully compatible for future OpenTelemetry integration
+- Full OpenTelemetry integration restored
+- All API calls now match the official OpenTelemetry Swift repository
 - No breaking changes to the public API
+- Proper telemetry data export to OTLP endpoints

@@ -268,30 +268,3 @@ public class OTLPLogExporter: LogRecordExporter {
     }
 }
 
-// MARK: - Extensions for missing types
-
-extension Metric {
-    var name: String { return "metric_name" }
-    var description: String? { return nil }
-    var unit: String? { return nil }
-}
-
-extension ReadableLogRecord {
-    var timestamp: Date { return Date() }
-    var severity: LogSeverity { return .info }
-    var body: String { return "" }
-    var attributes: [String: AttributeValue] { return [:] }
-}
-
-extension LogSeverity {
-    var name: String {
-        switch self {
-        case .trace: return "TRACE"
-        case .debug: return "DEBUG"
-        case .info: return "INFO"
-        case .warn: return "WARN"
-        case .error: return "ERROR"
-        case .fatal: return "FATAL"
-        }
-    }
-}

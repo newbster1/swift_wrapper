@@ -1,5 +1,10 @@
 import Foundation
 import UIKit
+import OpenTelemetryApi
+import OpenTelemetrySdk
+import ResourceExtension
+import URLSessionInstrumentation
+import NetworkStatus
 
 /// Main telemetry wrapper for iOS applications
 /// Provides comprehensive journey tracking and observability features
@@ -67,19 +72,78 @@ public class UnisightTelemetry {
     }
     
     private func setupOpenTelemetry() throws {
-        // Temporarily disable OpenTelemetry setup due to API compatibility issues
-        // TODO: Re-enable when OpenTelemetry API is stable
+        // Create resource
+        let resource = Resource(
+            attributes: [
+                "service.name": AttributeValue.string(configuration.serviceName),
+                "service.version": AttributeValue.string(configuration.version),
+                "deployment.environment": AttributeValue.string(configuration.environment),
+                "session.id": AttributeValue.string(sessionId),
+                "device.model": AttributeValue.string(DeviceInfo.model),
+                "os.name": AttributeValue.string(DeviceInfo.osName),
+                "os.version": AttributeValue.string(DeviceInfo.osVersion),
+                "app.version": AttributeValue.string(DeviceInfo.appVersion)
+            ]
+        )
         
-        // Create mock instances for now
-        self.tracer = MockTracer()
-        self.meter = MockMeter()
-        self.logger = MockLogger()
+        // Setup tracer provider
+        let spanProcessor: SpanProcessor
+        if configuration.usesBatchProcessor {
+            spanProcessor = BatchSpanProcessor(spanExporter: telemetryExporter)
+        } else {
+            spanProcessor = SimpleSpanProcessor(spanExporter: telemetryExporter)
+        }
+        
+        let tracerProvider = TracerProviderBuilder()
+            .add(spanProcessor: spanProcessor)
+            .with(resource: resource)
+            .build()
+        
+        OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
+        
+        self.tracer = tracerProvider.get(
+            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationVersion: "1.0.0"
+        )
+        
+        // Setup meter provider
+        let metricExporter = OTLPMetricExporter(endpoint: configuration.dispatcherEndpoint)
+        let metricReader = PeriodicMetricReader(
+            exporter: metricExporter,
+            exportInterval: TimeInterval(configuration.metricsExportInterval)
+        )
+        
+        self.meterProvider = MeterProviderBuilder()
+            .with(resource: resource)
+            .with(reader: metricReader)
+            .build()
+        
+        OpenTelemetry.registerMeterProvider(meterProvider: meterProvider)
+        
+        self.meter = meterProvider.get(
+            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationVersion: "1.0.0"
+        )
+        
+        // Setup logger provider
+        let logExporter = OTLPLogExporter(endpoint: configuration.dispatcherEndpoint)
+        let logProcessor = BatchLogRecordProcessor(logRecordExporter: logExporter)
+        
+        self.loggerProvider = LoggerProviderBuilder()
+            .with(resource: resource)
+            .with(processor: logProcessor)
+            .build()
+        
+        OpenTelemetry.registerLoggerProvider(loggerProvider: loggerProvider)
+        
+        self.logger = loggerProvider.get(
+            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationVersion: "1.0.0"
+        )
     }
     
     private func setupAutomaticInstrumentation() {
-        // URLSession instrumentation temporarily disabled due to API compatibility issues
-        // TODO: Re-enable when OpenTelemetry API is stable
-        /*
+        // Setup URLSession instrumentation
         let urlSessionConfig = URLSessionInstrumentationConfiguration(
             shouldRecordPayload: { _ in self.configuration.shouldRecordPayloads },
             shouldInstrument: { request in
@@ -93,7 +157,6 @@ public class UnisightTelemetry {
         
         // Initialize URLSession instrumentation
         _ = URLSessionInstrumentation(configuration: urlSessionConfig)
-        */
     }
     
     private func startSystemMonitoring() {
@@ -260,142 +323,7 @@ public class UnisightTelemetry {
     }
 }
 
-// MARK: - OpenTelemetry Type Definitions (Temporary)
 
-public protocol Tracer {
-    func spanBuilder(spanName: String) -> SpanBuilder
-}
-
-public protocol SpanBuilder {
-    func setSpanKind(spanKind: SpanKind) -> SpanBuilder
-    func setAttribute(key: String, value: AttributeValue) -> SpanBuilder
-    func startSpan() -> Span
-}
-
-public protocol Span {
-    func setAttribute(key: String, value: AttributeValue)
-    func end()
-}
-
-public protocol Meter {
-    func createDoubleCounter(name: String) -> DoubleCounter
-    func createIntCounter(name: String) -> IntCounter
-    func createDoubleHistogram(name: String) -> DoubleHistogram
-}
-
-public protocol DoubleCounter {
-    func add(value: Double, labels: [String: String])
-}
-
-public protocol IntCounter {
-    func add(value: Int, labels: [String: String])
-}
-
-public protocol DoubleHistogram {
-    func record(value: Double, labels: [String: String])
-}
-
-public protocol Logger {
-    func log(text: String, severity: LogSeverity, attributes: [String: AttributeValue])
-}
-
-public enum SpanKind {
-    case internal
-    case server
-    case client
-    case producer
-    case consumer
-}
-
-public enum LogSeverity {
-    case trace
-    case debug
-    case info
-    case warn
-    case error
-    case fatal
-}
-
-public enum AttributeValue {
-    case string(String)
-    case bool(Bool)
-    case int(Int)
-    case double(Double)
-    case stringArray([String])
-    case boolArray([Bool])
-    case intArray([Int])
-    case doubleArray([Double])
-}
-
-// MARK: - Mock Classes for OpenTelemetry Compatibility
-
-private class MockTracer: Tracer {
-    func spanBuilder(spanName: String) -> SpanBuilder {
-        return MockSpanBuilder()
-    }
-}
-
-private class MockSpanBuilder: SpanBuilder {
-    func setSpanKind(spanKind: SpanKind) -> SpanBuilder {
-        return self
-    }
-    
-    func setAttribute(key: String, value: AttributeValue) -> SpanBuilder {
-        return self
-    }
-    
-    func startSpan() -> Span {
-        return MockSpan()
-    }
-}
-
-private class MockSpan: Span {
-    func setAttribute(key: String, value: AttributeValue) {
-        // Mock implementation
-    }
-    
-    func end() {
-        // Mock implementation
-    }
-}
-
-private class MockMeter: Meter {
-    func createDoubleCounter(name: String) -> DoubleCounter {
-        return MockDoubleCounter()
-    }
-    
-    func createIntCounter(name: String) -> IntCounter {
-        return MockIntCounter()
-    }
-    
-    func createDoubleHistogram(name: String) -> DoubleHistogram {
-        return MockDoubleHistogram()
-    }
-}
-
-private class MockDoubleCounter: DoubleCounter {
-    func add(value: Double, labels: [String: String]) {
-        // Mock implementation
-    }
-}
-
-private class MockIntCounter: IntCounter {
-    func add(value: Int, labels: [String: String]) {
-        // Mock implementation
-    }
-}
-
-private class MockDoubleHistogram: DoubleHistogram {
-    func record(value: Double, labels: [String: String]) {
-        // Mock implementation
-    }
-}
-
-private class MockLogger: Logger {
-    func log(text: String, severity: LogSeverity, attributes: [String: AttributeValue]) {
-        // Mock implementation
-    }
-}
 
 // MARK: - AttributeValue Extension
 extension AttributeValue {
