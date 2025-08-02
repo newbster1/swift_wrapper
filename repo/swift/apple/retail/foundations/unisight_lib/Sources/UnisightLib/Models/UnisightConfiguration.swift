@@ -208,7 +208,7 @@ public enum SystemEventType: Hashable {
     case accessibilityChange
     case custom(String)
     
-    var systemEventName: String {
+    public var systemEventName: String {
         switch self {
         case .foreground:
             return "foreground"

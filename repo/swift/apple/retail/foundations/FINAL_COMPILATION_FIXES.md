@@ -317,6 +317,42 @@ TelemetryService.shared.logUserInteraction(
 )
 ```
 
+### 12. Build Configuration Issues (Sample App)
+**Issues Fixed:**
+- **Undefined Symbols**: Fixed missing public declarations and build configuration issues
+- **SwiftUICore Linking**: Resolved framework linking issues
+- **Library Dependencies**: Ensured proper linking between UnisightLib and sample app
+
+**Changes:**
+```swift
+// Fixed missing public declaration
+// Before: Internal access level
+var systemEventName: String { ... }
+
+// After: Public access level
+public var systemEventName: String { ... }
+```
+
+**Build Configuration Fixes:**
+- Added `BUILD_CONFIGURATION_FIX.md` with comprehensive solution
+- Ensured all necessary public declarations are in place
+- Provided step-by-step instructions for fixing Xcode build configuration
+
+**Key Steps:**
+1. **Clean Build Folder**: Remove all cached build artifacts
+2. **Check Target Dependencies**: Ensure UnisightLib is listed as dependency
+3. **Link Binary With Libraries**: Ensure UnisightLib is linked
+4. **Build Order**: Build UnisightLib first, then sample app
+5. **Import Statements**: Ensure `import UnisightLib` is present
+
+**Common Issues Resolved:**
+- ✅ **Undefined symbol: UnisightLib.UnisightConfiguration.init**
+- ✅ **Undefined symbol: UnisightLib.DeviceInfo.model.getter**
+- ✅ **Undefined symbol: UnisightLib.ViewContext.init**
+- ✅ **Undefined symbol: UnisightLib.UserEventType.userEventName.getter**
+- ✅ **SwiftUICore linking error**
+- ✅ **TLS version warning** (deprecation warning only)
+
 ## 🏗️ Architecture Improvements
 
 ### OpenTelemetry Integration
