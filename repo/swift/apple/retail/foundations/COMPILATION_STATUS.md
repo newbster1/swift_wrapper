@@ -26,6 +26,19 @@
 - **Solution**: Fixed OpenTelemetry API calls to use correct initialization methods
 - **Status**: ✅ FIXED
 
+### 5. Duplicate Type Declarations
+- **Problem**: Multiple type declarations causing conflicts
+- **Solution**: 
+  - Moved EventCategory enum to separate file
+  - Fixed duplicate type definitions in UnisightConfiguration.swift
+  - Ensured proper type resolution across module
+- **Status**: ✅ FIXED
+
+### 6. System Event References
+- **Problem**: Incorrect system event enum references
+- **Solution**: Updated system event references to use correct enum values
+- **Status**: ✅ FIXED
+
 ## Current Status
 
 The UnisightSampleApp should now compile successfully with full OpenTelemetry integration:
@@ -35,6 +48,8 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 3. ✅ TelemetryEvent scope issues resolved
 4. ✅ Init method resolution issues fixed
 5. ✅ Full OpenTelemetry integration restored
+6. ✅ Duplicate type declarations resolved
+7. ✅ System event references fixed
 
 ## Key API Fixes
 
@@ -42,6 +57,8 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - **PeriodicMetricReader**: Used correct constructor with `exporter` and `exportInterval`
 - **URLSession Instrumentation**: Restored proper initialization
 - **Resource Attributes**: Used correct OpenTelemetry attribute format
+- **Instrumentation Names**: Fixed to use `instrumentationName` instead of `instrumentationScopeName`
+- **Logger API**: Removed extra `instrumentationVersion` parameter
 
 ## Files Modified
 
@@ -49,6 +66,9 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - `unisight_lib/Sources/UnisightLib/UnisightTelemetry.swift` - Fixed OpenTelemetry API calls
 - `unisight_lib/Sources/UnisightLib/Core/EventProcessor.swift` - Fixed metric recording API
 - `unisight_lib/Sources/UnisightLib/Core/OTLPExporters.swift` - Removed unnecessary extensions
+- `unisight_lib/Sources/UnisightLib/Models/TelemetryEvent.swift` - Fixed type definitions
+- `unisight_lib/Sources/UnisightLib/Models/UnisightConfiguration.swift` - Fixed duplicate type declarations
+- `unisight_lib/Sources/UnisightLib/Models/EventCategory.swift` - Created separate file for EventCategory enum
 - `unisight_lib/Package.swift` - Restored OpenTelemetry dependencies
 
 ## Notes
@@ -57,3 +77,4 @@ The UnisightSampleApp should now compile successfully with full OpenTelemetry in
 - All API calls now match the official OpenTelemetry Swift repository
 - No breaking changes to the public API
 - Proper telemetry data export to OTLP endpoints
+- Clean module structure with proper type organization

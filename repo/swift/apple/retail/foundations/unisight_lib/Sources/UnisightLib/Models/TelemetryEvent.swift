@@ -1,9 +1,8 @@
 import Foundation
-import CoreGraphics
+import UIKit
 
-/// Represents a telemetry event with all associated metadata
+/// Represents a telemetry event with comprehensive context
 public struct TelemetryEvent: Codable {
-    
     // MARK: - Core Properties
     public let id: String
     public let name: String
@@ -11,17 +10,19 @@ public struct TelemetryEvent: Codable {
     public let timestamp: Date
     public let sessionId: String
     
-    // MARK: - Context Information
+    // MARK: - Attributes and Context
     public let attributes: [String: AnyCodable]
     public let viewContext: ViewContext?
     public let userContext: UserContext?
     public let deviceContext: DeviceContext
     public let appContext: AppContext
     
-    // MARK: - Journey Information
+    // MARK: - Navigation Context
     public let screenPath: [String]
     public let previousScreen: String?
     public let timeOnScreen: TimeInterval?
+    
+    // MARK: - Initialization
     
     public init(
         name: String,
@@ -134,29 +135,65 @@ public struct DeviceContext: Codable {
             timezone: TimeZone.current.identifier
         )
     }
+    
+    public init(
+        deviceModel: String,
+        osVersion: String,
+        appVersion: String,
+        networkStatus: String,
+        batteryLevel: Float,
+        memoryUsage: UInt64,
+        diskSpace: UInt64,
+        screenSize: CGSize,
+        locale: String,
+        timezone: String
+    ) {
+        self.deviceModel = deviceModel
+        self.osVersion = osVersion
+        self.appVersion = appVersion
+        self.networkStatus = networkStatus
+        self.batteryLevel = batteryLevel
+        self.memoryUsage = memoryUsage
+        self.diskSpace = diskSpace
+        self.screenSize = screenSize
+        self.locale = locale
+        self.timezone = timezone
+    }
 }
 
 public struct AppContext: Codable {
     public let appState: String
-    public let buildNumber: String
-    public let bundleIdentifier: String
-    public let installationId: String
-    public let launchTime: Date
-    public let sessionDuration: TimeInterval
+    public let isFirstLaunch: Bool
+    public let sessionCount: Int
+    public let lastActiveTime: Date
+    public let installationDate: Date
     
     static var current: AppContext {
         return AppContext(
             appState: AppStateManager.currentState,
-            buildNumber: DeviceInfo.buildNumber,
-            bundleIdentifier: DeviceInfo.bundleIdentifier,
-            installationId: InstallationManager.installationId,
-            launchTime: AppStateManager.launchTime,
-            sessionDuration: AppStateManager.sessionDuration
+            isFirstLaunch: InstallationManager.isFirstLaunch,
+            sessionCount: InstallationManager.sessionCount,
+            lastActiveTime: AppStateManager.lastActiveTime,
+            installationDate: InstallationManager.installationDate
         )
+    }
+    
+    public init(
+        appState: String,
+        isFirstLaunch: Bool,
+        sessionCount: Int,
+        lastActiveTime: Date,
+        installationDate: Date
+    ) {
+        self.appState = appState
+        self.isFirstLaunch = isFirstLaunch
+        self.sessionCount = sessionCount
+        self.lastActiveTime = lastActiveTime
+        self.installationDate = installationDate
     }
 }
 
-// MARK: - AnyCodable for flexible attribute encoding
+// MARK: - AnyCodable for flexible attribute values
 
 public struct AnyCodable: Codable {
     public let value: Any
@@ -168,49 +205,47 @@ public struct AnyCodable: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        if let intValue = try? container.decode(Int.self) {
-            value = intValue
-        } else if let doubleValue = try? container.decode(Double.self) {
-            value = doubleValue
-        } else if let stringValue = try? container.decode(String.self) {
-            value = stringValue
-        } else if let boolValue = try? container.decode(Bool.self) {
-            value = boolValue
-        } else if let arrayValue = try? container.decode([AnyCodable].self) {
-            value = arrayValue.map { $0.value }
-        } else if let dictValue = try? container.decode([String: AnyCodable].self) {
-            value = dictValue.mapValues { $0.value }
+        if container.decodeNil() {
+            self.value = NSNull()
+        } else if let bool = try? container.decode(Bool.self) {
+            self.value = bool
+        } else if let int = try? container.decode(Int.self) {
+            self.value = int
+        } else if let double = try? container.decode(Double.self) {
+            self.value = double
+        } else if let string = try? container.decode(String.self) {
+            self.value = string
+        } else if let array = try? container.decode([AnyCodable].self) {
+            self.value = array.map { $0.value }
+        } else if let dictionary = try? container.decode([String: AnyCodable].self) {
+            self.value = dictionary.mapValues { $0.value }
         } else {
-            throw DecodingError.typeMismatch(
-                AnyCodable.self,
-                DecodingError.Context(
-                    codingPath: decoder.codingPath,
-                    debugDescription: "Unsupported type"
-                )
-            )
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "AnyCodable value cannot be decoded")
         }
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
-        switch value {
-        case let intValue as Int:
-            try container.encode(intValue)
-        case let doubleValue as Double:
-            try container.encode(doubleValue)
-        case let floatValue as Float:
-            try container.encode(floatValue)
-        case let stringValue as String:
-            try container.encode(stringValue)
-        case let boolValue as Bool:
-            try container.encode(boolValue)
-        case let arrayValue as [Any]:
-            try container.encode(arrayValue.map { AnyCodable($0) })
-        case let dictValue as [String: Any]:
-            try container.encode(dictValue.mapValues { AnyCodable($0) })
+        switch self.value {
+        case is NSNull:
+            try container.encodeNil()
+        case let bool as Bool:
+            try container.encode(bool)
+        case let int as Int:
+            try container.encode(int)
+        case let double as Double:
+            try container.encode(double)
+        case let string as String:
+            try container.encode(string)
+        case let array as [Any]:
+            try container.encode(array.map { AnyCodable($0) })
+        case let dictionary as [String: Any]:
+            try container.encode(dictionary.mapValues { AnyCodable($0) })
         default:
-            try container.encode(String(describing: value))
+            let context = EncodingError.Context(codingPath: container.codingPath, debugDescription: "AnyCodable value cannot be encoded")
+            throw EncodingError.invalidValue(self.value, context)
         }
     }
 }
+

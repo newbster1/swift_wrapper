@@ -99,88 +99,108 @@ public enum EventType: Hashable {
 
 public enum UserEventType: Hashable {
     case tap
-    case swipe(SwipeDirection)
-    case rotate
-    case pinch
-    case pan
+    case doubleTap
     case longPress
-    case anyGesture
+    case swipe(SwipeDirection)
     case selection
     case entry
-    
-    public var eventName: String {
-        switch self {
-        case .tap:
-            return "tap"
-        case .swipe(let direction):
-            return "swipe_\(direction.rawValue)"
-        case .rotate:
-            return "rotate"
-        case .pinch:
-            return "pinch"
-        case .pan:
-            return "pan"
-        case .longPress:
-            return "long_press"
-        case .anyGesture:
-            return "gesture"
-        case .selection:
-            return "selection"
-        case .entry:
-            return "entry"
-        }
-    }
+    case exit
+    case scroll
+    case pinch
+    case rotation
+    case custom(String)
 }
 
-public enum SwipeDirection: String, CaseIterable, Hashable {
-    case left, right, up, down
+public enum SwipeDirection: String, CaseIterable {
+    case up = "up"
+    case down = "down"
+    case left = "left"
+    case right = "right"
 }
 
 public enum ScreenEventType: Hashable {
-    case navigated
     case appeared
     case disappeared
+    case navigated
+    case refreshed
+    case error
+    case custom(String)
 }
 
 public enum FunctionalEventType: Hashable {
-    case network(NetworkType)
-    case custom
+    case network(NetworkEventType)
+    case database(DatabaseEventType)
+    case cache(CacheEventType)
+    case api(APIEventType)
+    case custom(String)
 }
 
-public enum NetworkType: Hashable {
+public enum NetworkEventType: Hashable {
     case request(RequestType)
     case response(RequestType)
+    case error(RequestType)
+    case timeout(RequestType)
 }
 
-public enum RequestType: String, CaseIterable, Hashable {
-    case foreground
-    case background
+public enum RequestType: String, CaseIterable {
+    case foreground = "foreground"
+    case background = "background"
+    case critical = "critical"
+}
+
+public enum DatabaseEventType: Hashable {
+    case read
+    case write
+    case delete
+    case query
+    case transaction
+}
+
+public enum CacheEventType: Hashable {
+    case hit
+    case miss
+    case set
+    case delete
+    case clear
+}
+
+public enum APIEventType: Hashable {
+    case call
+    case response
+    case error
+    case timeout
 }
 
 public enum SystemEventType: Hashable {
     case foreground
     case background
-    case battery(Double)
-    case accessibility
-    case colorScheme
+    case terminate
+    case memoryWarning
+    case battery(Float)
+    case networkChange
+    case accessibilityChange
+    case custom(String)
 }
 
-// MARK: - Event Configuration Enums
+// MARK: - Configuration Enums
 
 public enum EventScheme: String, CaseIterable {
-    case debug
-    case production
-    case all
+    case debug = "debug"
+    case production = "production"
+    case all = "all"
 }
 
 public enum EventVerbosity: String, CaseIterable {
-    case complete
-    case discrete
+    case minimal = "minimal"
+    case discrete = "discrete"
+    case verbose = "verbose"
+    case debug = "debug"
 }
 
 public enum EventProcessing: String, CaseIterable {
-    case consolidate
-    case none
+    case none = "none"
+    case consolidate = "consolidate"
+    case batch = "batch"
 }
 
 // MARK: - Event Categories

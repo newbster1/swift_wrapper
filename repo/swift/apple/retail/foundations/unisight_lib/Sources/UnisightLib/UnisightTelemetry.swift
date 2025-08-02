@@ -102,7 +102,7 @@ public class UnisightTelemetry {
         OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
         
         self.tracer = tracerProvider.get(
-            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
@@ -121,7 +121,7 @@ public class UnisightTelemetry {
         OpenTelemetry.registerMeterProvider(meterProvider: meterProvider)
         
         self.meter = meterProvider.get(
-            instrumentationScopeName: "UnisightTelemetry",
+            instrumentationName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
         
@@ -137,8 +137,7 @@ public class UnisightTelemetry {
         OpenTelemetry.registerLoggerProvider(loggerProvider: loggerProvider)
         
         self.logger = loggerProvider.get(
-            instrumentationScopeName: "UnisightTelemetry",
-            instrumentationVersion: "1.0.0"
+            instrumentationName: "UnisightTelemetry"
         )
     }
     
@@ -187,7 +186,7 @@ public class UnisightTelemetry {
         }
         
         // Monitor accessibility changes
-        if configuration.events.contains(.system(.accessibility)) {
+        if configuration.events.contains(.system(.accessibilityChange)) {
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(accessibilityChanged),

@@ -127,10 +127,10 @@ public struct UnisightLib {
                 .functional(.network(.response(.foreground))),
                 
                 // System
-                .system(.foreground),
-                .system(.background),
-                .system(.battery(0.1)),
-                .system(.accessibility)
+                            .system(.foreground),
+            .system(.background),
+            .system(.battery(0.1)),
+            .system(.accessibilityChange)
             ],
             scheme: .production,
             verbosity: .discrete,
