@@ -13,7 +13,7 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
     
     // MARK: - Initialization
     
-    public init(endpoint: String, headers: [String: String] = [:]) {
+    public init(endpoint: String, headers: [String: String] = [:], bypassSSL: Bool = false) {
         self.endpoint = endpoint
         self.headers = headers
         
@@ -22,7 +22,13 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
         config.timeoutIntervalForRequest = 30
         config.timeoutIntervalForResource = 60
         
-        self.session = URLSession(configuration: config)
+        if bypassSSL {
+            // Use SSL bypass delegate for testing
+            let delegate = BypassSSLCertificateURLSessionDelegate()
+            self.session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+        } else {
+            self.session = URLSession(configuration: config)
+        }
         
         // Configure JSON encoder
         encoder.dateEncodingStrategy = .millisecondsSince1970

@@ -45,7 +45,8 @@ public class UnisightTelemetry {
         self.eventProcessor = EventProcessor(config: config)
         self.telemetryExporter = TelemetryExporter(
             endpoint: config.dispatcherEndpoint,
-            headers: config.headers
+            headers: config.headers,
+            bypassSSL: config.environment == "development" // Enable SSL bypass for development
         )
         
         // Initialize OpenTelemetry components

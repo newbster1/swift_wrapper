@@ -19,10 +19,10 @@ class TelemetryService {
                 serviceName: "UnisightSampleApp",
                 version: "1.0.0",
                 environment: "development",
-                dispatcherEndpoint: "https://your-telemetry-endpoint.com/otlp/v1/metrics",
+                dispatcherEndpoint: "https://ref-tel-dis-dev.kbusw2a.shld.apple.com/otlp/v1/metrics",
                 events: EventType.defaultEvents,
                 scheme: .debug,
-                verbosity: .complete,
+                verbosity: .verbose,
                 processing: .consolidate,
                 samplingRate: 1.0
             )
