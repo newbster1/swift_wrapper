@@ -1,6 +1,9 @@
 import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
+#if os(iOS)
+import UIKit
+#endif
 
 /// Manual protobuf encoder for OTLP data without generated files
 /// This creates the binary protobuf format by manually encoding fields

@@ -1,6 +1,10 @@
 import Foundation
 import OpenTelemetryApi
 import OpenTelemetrySdk
+#if os(iOS)
+import UIKit
+#endif
+import Network
 
 /// OTLP-compatible telemetry exporter for sending data to the dispatcher
 public class TelemetryExporter: SpanExporter, MetricExporter {
@@ -37,15 +41,25 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - SpanExporter
     
     public func export(spans: [SpanData], explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
-        // Encode spans to OTLP protobuf format
-        let protobufData = OTLPProtobufEncoder.encodeSpans(spans)
+        // Encode spans to OTLP protobuf format using manual encoder
+        let protobufData = ManualProtobufEncoder.encodeSpans(spans)
         
-        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/traces")
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/traces")
         return success ? .success : .failure
+    }
+    
+    // Legacy method for compatibility
+    public func export(spans: [SpanData]) -> SpanExporterResultCode {
+        return export(spans: spans, explicitTimeout: nil)
     }
     
     public func flush(explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
         return .success
+    }
+    
+    // Legacy method for compatibility
+    public func flush() -> SpanExporterResultCode {
+        return flush(explicitTimeout: nil)
     }
     
     public func shutdown(explicitTimeout: TimeInterval?) {
@@ -55,14 +69,22 @@ public class TelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - MetricExporter
     
     public func export(metrics: [Metric], shouldCancel: (() -> Bool)?) -> MetricExporterResultCode {
-        // Encode metrics to OTLP protobuf format
-        let protobufData = OTLPProtobufEncoder.encodeMetrics(metrics)
+        // Convert metrics to stable metric data
+        let metricData = metrics.compactMap { $0 as? StableMetricData }
         
-        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/metrics")
+        // Encode metrics to OTLP protobuf format using manual encoder
+        let protobufData = ManualProtobufEncoder.encodeMetrics(metricData)
+        
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/metrics")
         if !success {
             print("[UnisightLib] Metric export failed!")
         }
         return .success // OpenTelemetry's MetricExporterResultCode only supports .success
+    }
+    
+    // Legacy method for compatibility
+    public func export(metrics: [Metric]) -> MetricExporterResultCode {
+        return export(metrics: metrics, shouldCancel: nil)
     }
     
     public func flush() -> MetricExporterResultCode {

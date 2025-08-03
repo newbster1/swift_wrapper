@@ -1,3 +1,7 @@
+// THIS FILE IS DEPRECATED - USE ManualProtobufEncoder INSTEAD
+// Requires generated protobuf files which we're avoiding
+
+/*
 import Foundation
 
 /// OTLP Protobuf Encoder for OpenTelemetry Protocol
@@ -341,3 +345,4 @@ public class OTLPProtobufEncoder {
         return data
     }
 }
+*/

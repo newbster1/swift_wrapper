@@ -3,8 +3,8 @@ import UIKit
 import OpenTelemetryApi
 import OpenTelemetrySdk
 import ResourceExtension
-import URLSessionInstrumentation
-import NetworkStatus
+// import URLSessionInstrumentation  // Comment out if not available
+// import NetworkStatus              // Comment out if not available
 
 /// Main telemetry wrapper for iOS applications
 /// Provides comprehensive journey tracking and observability features
@@ -132,20 +132,20 @@ public class UnisightTelemetry {
     }
     
     private func setupAutomaticInstrumentation() {
-        // Setup URLSession instrumentation
-        let urlSessionConfig = URLSessionInstrumentationConfiguration(
-            shouldRecordPayload: { _ in self.configuration.shouldRecordPayloads },
-            shouldInstrument: { request in
-                // Don't instrument our own telemetry requests
-                !(request.url?.absoluteString.contains(self.configuration.dispatcherEndpoint) ?? false)
-            },
-            nameSpan: { request in
-                return "\(request.httpMethod ?? "GET") \(request.url?.path ?? "unknown")"
-            }
-        )
-        
+                // Setup URLSession instrumentation (commented out if not available)
+        // let urlSessionConfig = URLSessionInstrumentationConfiguration(
+        //     shouldRecordPayload: { _ in self.configuration.shouldRecordPayloads },
+        //     shouldInstrument: { request in
+        //         // Don't instrument our own telemetry requests
+        //         !(request.url?.absoluteString.contains(self.configuration.dispatcherEndpoint) ?? false)
+        //     },
+        //     nameSpan: { request in
+        //         return "\(request.httpMethod ?? "GET") \(request.url?.path ?? "unknown")"
+        //     }
+        // )
+
         // Initialize URLSession instrumentation
-        _ = URLSessionInstrumentation(configuration: urlSessionConfig)
+        // _ = URLSessionInstrumentation(configuration: urlSessionConfig)
     }
     
     private func startSystemMonitoring() {
