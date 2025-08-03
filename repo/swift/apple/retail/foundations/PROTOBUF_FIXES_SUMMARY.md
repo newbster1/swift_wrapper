@@ -12,8 +12,8 @@
 ### 2. Field Number Corrections
 **Problem**: Incorrect field numbers were being used for the OTLP protobuf specification
 **Fix**: Updated field numbers to match the OTLP specification:
-- Changed gauge field from 5 to 4 in Metric message
-- Changed double value field from 6 to 5 in NumberDataPoint message
+- Changed gauge field from 4 to 5 in Metric message
+- Changed double value field from 5 to 6 in NumberDataPoint message
 
 ### 3. Protobuf Wire Format Fix
 **Problem**: The `writeField` method was incorrectly encoding length-delimited fields
@@ -66,11 +66,11 @@ ExportMetricsServiceRequest
             ├── name (field 1)
             ├── description (field 2)
             ├── unit (field 3)
-            └── Gauge (field 4)
+            └── Gauge (field 5)
                 └── NumberDataPoint (field 1, repeated)
                     ├── start_time_unix_nano (field 2)
                     ├── time_unix_nano (field 4)
-                    └── as_double (field 5)
+                    └── as_double (field 6)
 ```
 
 ## Key Changes Made
