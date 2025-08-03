@@ -36,11 +36,16 @@ public class ManualProtobufEncoder {
     public static func encodeMetrics(_ metrics: [StableMetricData]) -> Data {
         var data = Data()
         
+        print("[UnisightLib] Encoding \(metrics.count) metrics into protobuf")
+        
         // ExportMetricsServiceRequest message
-        for metric in metrics {
-            let resourceMetricsData = encodeResourceMetrics(metric)
+        if !metrics.isEmpty {
+            // Group all metrics into a single ResourceMetrics
+            let resourceMetricsData = encodeResourceMetricsCollection(metrics)
             // Field 1: repeated ResourceMetrics resource_metrics
             writeField(1, wireType: .lengthDelimited, data: resourceMetricsData, to: &data)
+        } else {
+            print("[UnisightLib] No metrics to encode, returning empty request")
         }
         
         return data
@@ -57,6 +62,20 @@ public class ManualProtobufEncoder {
         // Field 2: repeated ScopeSpans scope_spans
         let scopeSpansData = encodeScopeSpans(span)
         writeField(2, wireType: .lengthDelimited, data: scopeSpansData, to: &data)
+        
+        return data
+    }
+    
+    private static func encodeResourceMetricsCollection(_ metrics: [StableMetricData]) -> Data {
+        var data = Data()
+        
+        // Field 1: Resource resource
+        let resourceData = encodeResource()
+        writeField(1, wireType: .lengthDelimited, data: resourceData, to: &data)
+        
+        // Field 2: repeated ScopeMetrics scope_metrics
+        let scopeMetricsData = encodeScopeMetricsCollection(metrics)
+        writeField(2, wireType: .lengthDelimited, data: scopeMetricsData, to: &data)
         
         return data
     }
@@ -105,6 +124,22 @@ public class ManualProtobufEncoder {
         // Field 2: repeated Span spans
         let spanData = encodeSpan(span)
         writeField(2, wireType: .lengthDelimited, data: spanData, to: &data)
+        
+        return data
+    }
+    
+    private static func encodeScopeMetricsCollection(_ metrics: [StableMetricData]) -> Data {
+        var data = Data()
+        
+        // Field 1: InstrumentationScope scope
+        let scopeData = encodeInstrumentationScope()
+        writeField(1, wireType: .lengthDelimited, data: scopeData, to: &data)
+        
+        // Field 2: repeated Metric metrics - encode all metrics here
+        for metric in metrics {
+            let metricData = encodeMetric(metric)
+            writeField(2, wireType: .lengthDelimited, data: metricData, to: &data)
+        }
         
         return data
     }

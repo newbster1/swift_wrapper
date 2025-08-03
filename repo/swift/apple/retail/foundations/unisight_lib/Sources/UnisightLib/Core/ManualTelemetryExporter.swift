@@ -56,7 +56,10 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - MetricExporter Protocol
     public func export(metrics: [Metric]) -> MetricExporterResultCode {
         let metricData = metrics.compactMap { $0 as? StableMetricData }
+        print("[UnisightLib] Exporting \(metricData.count) metrics (from \(metrics.count) total)")
         let protobufData = ManualProtobufEncoder.encodeMetrics(metricData)
+        print("[UnisightLib] Generated protobuf data: \(protobufData.count) bytes")
+        print("[UnisightLib] Protobuf hex: \(protobufData.map { String(format: "%02x", $0) }.joined())")
         let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/metrics")
         return .success // MetricExporterResultCode only has .success
     }
@@ -85,6 +88,11 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         request.httpMethod = "POST"
         request.httpBody = data
         request.setValue("application/x-protobuf", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/x-protobuf", forHTTPHeaderField: "Accept")
+        
+        print("[UnisightLib] Sending to URL: \(url)")
+        print("[UnisightLib] Content-Length: \(data.count)")
+        print("[UnisightLib] Content-Type: application/x-protobuf")
 
         // Add custom headers
         for (key, value) in headers {
