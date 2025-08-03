@@ -29,7 +29,7 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - SpanExporter Protocol
     public func export(spans: [SpanData]) -> SpanExporterResultCode {
         let protobufData = ManualProtobufEncoder.encodeSpans(spans)
-        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/otlp/v1/traces")
+        let success = sendProtobufRequest(protobufData, to: endpoint)
         return success ? .success : .failure
     }
     
@@ -50,7 +50,7 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
     }
     
     public func shutdown(explicitTimeout: TimeInterval?) {
-        shutdown()
+        (self as SpanExporter).shutdown()
     }
 
     // MARK: - MetricExporter Protocol
@@ -60,7 +60,7 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         let protobufData = ManualProtobufEncoder.encodeMetrics(metricData)
         print("[UnisightLib] Generated protobuf data: \(protobufData.count) bytes")
         print("[UnisightLib] Protobuf hex: \(protobufData.map { String(format: "%02x", $0) }.joined())")
-        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/otlp/v1/metrics")
+        let success = sendProtobufRequest(protobufData, to: endpoint)
         return .success // MetricExporterResultCode only has .success
     }
     
