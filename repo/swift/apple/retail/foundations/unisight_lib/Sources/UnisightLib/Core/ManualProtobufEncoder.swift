@@ -99,21 +99,11 @@ public class ManualProtobufEncoder {
     
     private static func encodeResource() -> Data {
         var data = Data()
-        
+
         // Field 1: repeated KeyValue attributes
-        let attributes = [
-            ("service.name", "UnisightTelemetry"),
-            ("service.version", "1.0.0"),
-            ("device.model", DeviceInfo.model),
-            ("os.name", DeviceInfo.osName),
-            ("os.version", DeviceInfo.osVersion)
-        ]
-        
-        for (key, value) in attributes {
-            let keyValueData = encodeKeyValue(key: key, value: value)
-            writeField(1, wireType: .lengthDelimited, data: keyValueData, to: &data)
-        }
-        
+        let keyValueData = encodeKeyValue(key: "service.name", value: "UnisightTelemetry")
+        writeField(1, wireType: .lengthDelimited, data: keyValueData, to: &data)
+
         return data
     }
     
@@ -164,13 +154,10 @@ public class ManualProtobufEncoder {
     
     private static func encodeInstrumentationScope() -> Data {
         var data = Data()
-        
+
         // Field 1: string name
         writeStringField(1, value: "UnisightTelemetry", to: &data)
-        
-        // Field 2: string version
-        writeStringField(2, value: "1.0.0", to: &data)
-        
+
         return data
     }
     
