@@ -227,6 +227,9 @@ public class ManualProtobufEncoder {
     
     private static func encodeMetric(_ metric: StableMetricData) -> Data {
         var data = Data()
+        
+        print("[UnisightLib] Encoding metric: \(metric.name)")
+        
         writeStringField(1, value: metric.name, to: &data)
 
         if !metric.description.isEmpty {
@@ -239,8 +242,9 @@ public class ManualProtobufEncoder {
 
         // Create a simple gauge metric with a single data point
         let gaugeData = encodeGauge(metric)
-        writeField(4, wireType: .lengthDelimited, data: gaugeData, to: &data)
+        writeField(5, wireType: .lengthDelimited, data: gaugeData, to: &data)
 
+        print("[UnisightLib] Metric data size: \(data.count) bytes")
         return data
     }
 
@@ -264,10 +268,10 @@ public class ManualProtobufEncoder {
         // Field 4: fixed64 time_unix_nano
         writeFixed64Field(4, value: currentTime, to: &data)
         
-        // Field 5: double as_double - use a default value of 1.0
+        // Field 6: double as_double - use a default value of 1.0
         // In a real implementation, you would extract the actual metric value
         let metricValue = 1.0
-        writeDoubleField(5, value: metricValue, to: &data)
+        writeDoubleField(6, value: metricValue, to: &data)
         
         return data
     }
