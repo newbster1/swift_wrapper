@@ -25,7 +25,7 @@ public class UnisightTelemetry {
     private var configuration: UnisightConfiguration!
     private var journeyManager: JourneyManager!
     private var eventProcessor: EventProcessor!
-    private var telemetryExporter: TelemetryExporter!
+    private var telemetryExporter: ManualTelemetryExporter!
     
     // MARK: - Initialization
     private init() {}
@@ -43,7 +43,7 @@ public class UnisightTelemetry {
         // Initialize custom components first
         self.journeyManager = JourneyManager(config: config)
         self.eventProcessor = EventProcessor(config: config)
-        self.telemetryExporter = TelemetryExporter(
+        self.telemetryExporter = ManualTelemetryExporter(
             endpoint: config.dispatcherEndpoint,
             headers: config.headers,
             bypassSSL: config.environment == "development" // Enable SSL bypass for development

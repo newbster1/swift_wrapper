@@ -32,13 +32,25 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/traces")
         return success ? .success : .failure
     }
+    
+    public func export(spans: [SpanData], explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
+        return export(spans: spans)
+    }
 
     public func flush() -> SpanExporterResultCode {
         return .success
     }
+    
+    public func flush(explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
+        return flush()
+    }
 
     public func shutdown() {
         session.invalidateAndCancel()
+    }
+    
+    public func shutdown(explicitTimeout: TimeInterval?) {
+        shutdown()
     }
 
     // MARK: - MetricExporter Protocol
@@ -46,7 +58,20 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         let metricData = metrics.compactMap { $0 as? StableMetricData }
         let protobufData = ManualProtobufEncoder.encodeMetrics(metricData)
         let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/metrics")
-        return success ? .success : .failure
+        return .success // MetricExporterResultCode only has .success
+    }
+    
+    public func export(metrics: [Metric], shouldCancel: (() -> Bool)?) -> MetricExporterResultCode {
+        return export(metrics: metrics)
+    }
+    
+    public func flush() -> MetricExporterResultCode {
+        return .success
+    }
+    
+    public func shutdown() -> MetricExporterResultCode {
+        session.invalidateAndCancel()
+        return .success
     }
 
     // MARK: - Private Methods
