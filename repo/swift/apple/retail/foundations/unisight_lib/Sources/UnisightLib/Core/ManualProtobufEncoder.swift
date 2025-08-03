@@ -386,38 +386,7 @@ public class ManualProtobufEncoder {
     }
 }
 
-// MARK: - Device Info Helper
-private struct DeviceInfo {
-    static var model: String {
-        #if os(iOS)
-        return UIDevice.current.model
-        #elseif os(macOS)
-        return "Mac"
-        #else
-        return "Unknown"
-        #endif
-    }
-    
-    static var osName: String {
-        #if os(iOS)
-        return "iOS"
-        #elseif os(macOS)
-        return "macOS"
-        #else
-        return "Unknown"
-        #endif
-    }
-    
-    static var osVersion: String {
-        #if os(iOS)
-        return UIDevice.current.systemVersion
-        #elseif os(macOS)
-        return ProcessInfo.processInfo.operatingSystemVersionString
-        #else
-        return "Unknown"
-        #endif
-    }
-}
+
 
 // MARK: - Data Extension for Hex String
 extension Data {
