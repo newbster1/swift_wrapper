@@ -227,51 +227,48 @@ public class ManualProtobufEncoder {
     
     private static func encodeMetric(_ metric: StableMetricData) -> Data {
         var data = Data()
-
-        print("[UnisightLib] Encoding metric: \(metric.name)")
-
-        // Field 1: string name
         writeStringField(1, value: metric.name, to: &data)
 
-        // Field 2: string description
-        writeStringField(2, value: metric.description, to: &data)
+        if !metric.description.isEmpty {
+            writeStringField(2, value: metric.description, to: &data)
+        }
 
-        // Field 3: string unit
-        writeStringField(3, value: metric.unit, to: &data)
+        if !metric.unit.isEmpty {
+            writeStringField(3, value: metric.unit, to: &data)
+        }
 
-        // Field 5: Gauge - encode as a proper gauge metric
+        // Create a simple gauge metric with a single data point
         let gaugeData = encodeGauge(metric)
-        writeField(5, wireType: .lengthDelimited, data: gaugeData, to: &data)
+        writeField(4, wireType: .lengthDelimited, data: gaugeData, to: &data)
 
-        print("[UnisightLib] Metric data size: \(data.count) bytes")
         return data
     }
-    
+
     private static func encodeGauge(_ metric: StableMetricData) -> Data {
         var data = Data()
-
+        
         // Field 1: repeated NumberDataPoint data_points
         let pointData = encodeNumberDataPoint(metric)
         writeField(1, wireType: .lengthDelimited, data: pointData, to: &data)
-
+        
         return data
     }
 
     private static func encodeNumberDataPoint(_ metric: StableMetricData) -> Data {
         var data = Data()
-
+        
         // Field 2: fixed64 start_time_unix_nano
         let currentTime = UInt64(Date().timeIntervalSince1970 * 1_000_000_000)
         writeFixed64Field(2, value: currentTime, to: &data)
-
+        
         // Field 4: fixed64 time_unix_nano
         writeFixed64Field(4, value: currentTime, to: &data)
-
-        // Field 6: double as_double - use the actual metric value
-        // For now, we'll use a default value of 1.0, but this should come from the metric
-        let metricValue = 1.0 // TODO: Extract actual value from metric
-        writeDoubleField(6, value: metricValue, to: &data)
-
+        
+        // Field 5: double as_double - use a default value of 1.0
+        // In a real implementation, you would extract the actual metric value
+        let metricValue = 1.0
+        writeDoubleField(5, value: metricValue, to: &data)
+        
         return data
     }
     
