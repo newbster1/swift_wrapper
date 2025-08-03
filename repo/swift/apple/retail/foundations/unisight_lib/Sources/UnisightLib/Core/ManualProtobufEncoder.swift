@@ -40,14 +40,16 @@ public class ManualProtobufEncoder {
         
         // ExportMetricsServiceRequest message
         if !metrics.isEmpty {
-            // Group all metrics into a single ResourceMetrics
+            // Create a single ResourceMetrics that contains all metrics
             let resourceMetricsData = encodeResourceMetricsCollection(metrics)
+            print("[UnisightLib] ResourceMetrics data size: \(resourceMetricsData.count) bytes")
             // Field 1: repeated ResourceMetrics resource_metrics
             writeField(1, wireType: .lengthDelimited, data: resourceMetricsData, to: &data)
         } else {
             print("[UnisightLib] No metrics to encode, returning empty request")
         }
         
+        print("[UnisightLib] Final protobuf data size: \(data.count) bytes")
         return data
     }
     
@@ -74,6 +76,7 @@ public class ManualProtobufEncoder {
         writeField(1, wireType: .lengthDelimited, data: resourceData, to: &data)
         
         // Field 2: repeated ScopeMetrics scope_metrics
+        // Create a single ScopeMetrics containing all metrics
         let scopeMetricsData = encodeScopeMetricsCollection(metrics)
         writeField(2, wireType: .lengthDelimited, data: scopeMetricsData, to: &data)
         
@@ -96,21 +99,11 @@ public class ManualProtobufEncoder {
     
     private static func encodeResource() -> Data {
         var data = Data()
-        
+
         // Field 1: repeated KeyValue attributes
-        let attributes = [
-            ("service.name", "UnisightTelemetry"),
-            ("service.version", "1.0.0"),
-            ("device.model", DeviceInfo.model),
-            ("os.name", DeviceInfo.osName),
-            ("os.version", DeviceInfo.osVersion)
-        ]
-        
-        for (key, value) in attributes {
-            let keyValueData = encodeKeyValue(key: key, value: value)
-            writeField(1, wireType: .lengthDelimited, data: keyValueData, to: &data)
-        }
-        
+        let keyValueData = encodeKeyValue(key: "service.name", value: "UnisightTelemetry")
+        writeField(1, wireType: .lengthDelimited, data: keyValueData, to: &data)
+
         return data
     }
     
@@ -131,6 +124,7 @@ public class ManualProtobufEncoder {
     private static func encodeScopeMetricsCollection(_ metrics: [StableMetricData]) -> Data {
         var data = Data()
         
+        // Create a single ScopeMetrics message containing all metrics
         // Field 1: InstrumentationScope scope
         let scopeData = encodeInstrumentationScope()
         writeField(1, wireType: .lengthDelimited, data: scopeData, to: &data)
@@ -160,102 +154,112 @@ public class ManualProtobufEncoder {
     
     private static func encodeInstrumentationScope() -> Data {
         var data = Data()
-        
+
         // Field 1: string name
         writeStringField(1, value: "UnisightTelemetry", to: &data)
-        
-        // Field 2: string version
-        writeStringField(2, value: "1.0.0", to: &data)
-        
+
         return data
     }
     
     private static func encodeSpan(_ span: SpanData) -> Data {
         var data = Data()
-        
+
         // Field 1: bytes trace_id
         let traceIdData = Data(hexString: span.traceId.hexString) ?? Data()
+        if traceIdData.isEmpty {
+            print("[UnisightLib] Warning: Invalid trace ID: \(span.traceId.hexString)")
+        }
         writeField(1, wireType: .lengthDelimited, data: traceIdData, to: &data)
-        
+
         // Field 2: bytes span_id
         let spanIdData = Data(hexString: span.spanId.hexString) ?? Data()
+        if spanIdData.isEmpty {
+            print("[UnisightLib] Warning: Invalid span ID: \(span.spanId.hexString)")
+        }
         writeField(2, wireType: .lengthDelimited, data: spanIdData, to: &data)
-        
+
         // Field 3: bytes parent_span_id (optional)
         if let parentSpanId = span.parentSpanId {
             let parentSpanIdData = Data(hexString: parentSpanId.hexString) ?? Data()
+            if parentSpanIdData.isEmpty {
+                print("[UnisightLib] Warning: Invalid parent span ID: \(parentSpanId.hexString)")
+            }
             writeField(3, wireType: .lengthDelimited, data: parentSpanIdData, to: &data)
         }
-        
+
         // Field 4: string name
         writeStringField(4, value: span.name, to: &data)
-        
+
         // Field 5: SpanKind kind
         writeVarintField(5, value: UInt64(convertSpanKind(span.kind)), to: &data)
-        
+
         // Field 6: fixed64 start_time_unix_nano
         writeFixed64Field(6, value: UInt64(span.startTime.timeIntervalSince1970 * 1_000_000_000), to: &data)
-        
+
         // Field 7: fixed64 end_time_unix_nano
         writeFixed64Field(7, value: UInt64(span.endTime.timeIntervalSince1970 * 1_000_000_000), to: &data)
-        
+
         // Field 8: repeated KeyValue attributes
         for attribute in span.attributes {
             let attributeData = encodeKeyValue(key: attribute.key, attributeValue: attribute.value)
             writeField(8, wireType: .lengthDelimited, data: attributeData, to: &data)
         }
-        
+
         // Field 11: Status status
         let statusData = encodeStatus(span.status)
         writeField(11, wireType: .lengthDelimited, data: statusData, to: &data)
+
+        return data
+    }
+    
+    private static func encodeMetric(_ metric: StableMetricData) -> Data {
+        var data = Data()
+        
+        print("[UnisightLib] Encoding metric: \(metric.name)")
+        
+        writeStringField(1, value: metric.name, to: &data)
+
+        if !metric.description.isEmpty {
+            writeStringField(2, value: metric.description, to: &data)
+        }
+
+        if !metric.unit.isEmpty {
+            writeStringField(3, value: metric.unit, to: &data)
+        }
+
+        // Create a simple gauge metric with a single data point
+        let gaugeData = encodeGauge(metric)
+        writeField(5, wireType: .lengthDelimited, data: gaugeData, to: &data)
+
+        print("[UnisightLib] Metric data size: \(data.count) bytes")
+        return data
+    }
+
+    private static func encodeGauge(_ metric: StableMetricData) -> Data {
+        var data = Data()
+        
+        // Field 1: repeated NumberDataPoint data_points
+        let pointData = encodeNumberDataPoint(metric)
+        writeField(1, wireType: .lengthDelimited, data: pointData, to: &data)
         
         return data
     }
-    
-        private static func encodeMetric(_ metric: StableMetricData) -> Data {
+
+    private static func encodeNumberDataPoint(_ metric: StableMetricData) -> Data {
         var data = Data()
-
-        // Field 1: string name
-        writeStringField(1, value: metric.name, to: &data)
-
-        // Field 2: string description
-        writeStringField(2, value: metric.description, to: &data)
-
-        // Field 3: string unit
-        writeStringField(3, value: metric.unit, to: &data)
-
-        // Note: For now, we create a simple gauge metric structure
-        // In a full implementation, you would handle different metric types
-        // Field 5: Gauge (simplified)
-        let gaugeData = encodeSimpleGauge()
-        writeField(5, wireType: .lengthDelimited, data: gaugeData, to: &data)
-
-        return data
-    }
-    
-        private static func encodeSimpleGauge() -> Data {
-        var data = Data()
-
-        // Field 1: repeated NumberDataPoint data_points
-        let pointData = encodeSimpleNumberDataPoint()
-        writeField(1, wireType: .lengthDelimited, data: pointData, to: &data)
-
-        return data
-    }
-
-    private static func encodeSimpleNumberDataPoint() -> Data {
-        var data = Data()
-
+        
         // Field 2: fixed64 start_time_unix_nano
         let currentTime = UInt64(Date().timeIntervalSince1970 * 1_000_000_000)
         writeFixed64Field(2, value: currentTime, to: &data)
-
+        
         // Field 4: fixed64 time_unix_nano
         writeFixed64Field(4, value: currentTime, to: &data)
-
-        // Field 6: double as_double (default value 1.0)
-        writeDoubleField(6, value: 1.0, to: &data)
-
+        
+        // Field 6: double as_double - use a default value of 1.0
+        // In a real implementation, you would extract the actual metric value
+        let metricValue = 1.0
+        writeDoubleField(6, value: metricValue, to: &data)
+        
         return data
     }
     
@@ -375,7 +379,11 @@ public class ManualProtobufEncoder {
     private static func writeField(_ fieldNumber: Int, wireType: WireType, data: Data, to output: inout Data) {
         let tag = (fieldNumber << 3) | Int(wireType.rawValue)
         writeVarint(UInt64(tag), to: &output)
-        writeVarint(UInt64(data.count), to: &output)
+        
+        if wireType == .lengthDelimited {
+            writeVarint(UInt64(data.count), to: &output)
+        }
+        
         output.append(data)
     }
     
@@ -429,11 +437,20 @@ extension Data {
         var data = Data()
         var index = hexString.startIndex
         
+        // Ensure the hex string has an even number of characters
+        if hexString.count % 2 != 0 {
+            print("[UnisightLib] Warning: Odd-length hex string: \(hexString)")
+            return nil
+        }
+        
         while index < hexString.endIndex {
             let nextIndex = hexString.index(index, offsetBy: 2, limitedBy: hexString.endIndex) ?? hexString.endIndex
             let byteString = String(hexString[index..<nextIndex])
             if let byte = UInt8(byteString, radix: 16) {
                 data.append(byte)
+            } else {
+                print("[UnisightLib] Warning: Invalid hex character in string: \(byteString)")
+                return nil
             }
             index = nextIndex
         }
