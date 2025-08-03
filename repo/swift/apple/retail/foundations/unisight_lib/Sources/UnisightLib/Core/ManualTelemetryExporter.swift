@@ -29,7 +29,7 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
     // MARK: - SpanExporter Protocol
     public func export(spans: [SpanData]) -> SpanExporterResultCode {
         let protobufData = ManualProtobufEncoder.encodeSpans(spans)
-        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/traces")
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/otlp/v1/traces")
         return success ? .success : .failure
     }
     
@@ -60,7 +60,7 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         let protobufData = ManualProtobufEncoder.encodeMetrics(metricData)
         print("[UnisightLib] Generated protobuf data: \(protobufData.count) bytes")
         print("[UnisightLib] Protobuf hex: \(protobufData.map { String(format: "%02x", $0) }.joined())")
-        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/v1/metrics")
+        let success = sendProtobufRequest(protobufData, to: "\(endpoint)/otlp/v1/metrics")
         return .success // MetricExporterResultCode only has .success
     }
     
@@ -93,6 +93,11 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         print("[UnisightLib] Sending to URL: \(url)")
         print("[UnisightLib] Content-Length: \(data.count)")
         print("[UnisightLib] Content-Type: application/x-protobuf")
+        print("[UnisightLib] Request headers:")
+        for (key, value) in request.allHTTPHeaderFields ?? [:] {
+            print("[UnisightLib]   \(key): \(value)")
+        }
+        print("[UnisightLib] Request body (first 100 bytes): \(data.prefix(100).map { String(format: "%02x", $0) }.joined())")
 
         // Add custom headers
         for (key, value) in headers {
@@ -118,9 +123,18 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
             success = (200...299).contains(httpResponse.statusCode)
             if !success {
                 print("[UnisightLib] Export failed with status: \(httpResponse.statusCode)")
+                print("[UnisightLib] Response headers: \(httpResponse.allHeaderFields)")
                 if let data = data, let body = String(data: data, encoding: .utf8) {
                     print("[UnisightLib] Response body: \(body)")
                 }
+                
+                // Additional debugging for 400 errors
+                if httpResponse.statusCode == 400 {
+                    print("[UnisightLib] 400 Bad Request - This usually means the protobuf format is incorrect")
+                    print("[UnisightLib] Check that the OTLP protobuf structure matches the specification")
+                }
+            } else {
+                print("[UnisightLib] Export successful with status: \(httpResponse.statusCode)")
             }
         }
 
