@@ -1,224 +1,67 @@
 import Foundation
 import UnisightLib
 
-class TelemetryService {
-    static let shared = TelemetryService()
-
-    private var isInitialized = false
-
+/// Simplified telemetry service for the sample app
+/// Provides easy-to-use methods for logging events and metrics
+public class TelemetryService {
+    
+    public static let shared = TelemetryService()
+    
     private init() {}
-
-    func initialize() {
-        guard !isInitialized else {
-            print("TelemetryService is already initialized")
-            return
-        }
-
-        do {
-            let config = UnisightConfiguration(
-                serviceName: "UnisightSampleApp",
-                version: "1.0.0",
-                environment: "development",
-                dispatcherEndpoint: "https://ref-tel-dis-dev.kbusw2a.shld.apple.com/otlp/v1/metrics",
-                headers: [
-                    "Content-Type": "application/x-protobuf",
-                    "Accept": "application/x-protobuf"
-                ],
-                events: EventType.defaultEvents,
-                scheme: .debug,
-                verbosity: .verbose,
-                processing: .consolidate,
-                samplingRate: 1.0
-            )
-
-            try UnisightTelemetry.shared.initialize(with: config)
-            isInitialized = true
-
-            // Start a new session
-            UnisightTelemetry.shared.startNewSession()
-
-            print("✅ Telemetry initialized successfully")
-
-        } catch {
-            print("❌ Failed to initialize telemetry: \(error)")
-        }
-    }
-
-    // MARK: - Event Logging Methods
-
-    func logEvent(
+    
+    /// Log an event
+    /// - Parameters:
+    ///   - name: Event name
+    ///   - category: Event category
+    ///   - attributes: Additional attributes
+    public func logEvent(
         name: String,
-        category: EventCategory,
-        attributes: [String: Any] = [:],
-        viewContext: ViewContext? = nil,
-        userContext: UserContext? = nil
+        category: EventCategory = .user,
+        attributes: [String: Any] = [:]
     ) {
-        guard isInitialized else {
-            print("⚠️ Telemetry not initialized. Event '\(name)' not logged.")
-            return
-        }
-
         UnisightTelemetry.shared.logEvent(
             name: name,
             category: category,
             attributes: attributes
         )
+    }
+    
+    /// Record a metric
+    /// - Parameters:
+    ///   - name: Metric name
+    ///   - value: Metric value
+    ///   - labels: Additional labels
+    public func recordMetric(
+        name: String,
+        value: Double,
+        labels: [String: String] = [:]
+    ) {
+        UnisightTelemetry.shared.recordMetric(
+            name: name,
+            value: value,
+            labels: labels
+        )
+    }
+    
+    /// Record test metrics for demonstration
+    public func recordTestMetrics() {
+        print("[TelemetryService] Recording test metrics")
         
-        // Also record metrics for important events
-        if category == .user || category == .functional {
-            UnisightTelemetry.shared.recordMetric(
-                name: "event_\(name)_count",
-                value: 1.0
-            )
-        }
-    }
-
-    func logUserInteraction(
-        _ interaction: UserEventType,
-        viewName: String,
-        elementId: String? = nil,
-        elementType: String? = nil,
-        elementLabel: String? = nil,
-        coordinates: CGPoint? = nil
-    ) {
-        let viewContext = ViewContext(
-            viewName: viewName,
-            elementIdentifier: elementId,
-            elementType: elementType,
-            elementLabel: elementLabel,
-            coordinates: coordinates
-        )
-
-        logEvent(
-            name: "user_\(interaction.userEventName)",
-            category: .user,
-            viewContext: viewContext
-        )
-    }
-    
-    // Backward compatibility method for string-based interactions
-    func logUserInteraction(
-        _ interaction: String,
-        viewName: String,
-        elementId: String? = nil,
-        elementType: String? = nil,
-        elementLabel: String? = nil,
-        coordinates: CGPoint? = nil
-    ) {
-        let viewContext = ViewContext(
-            viewName: viewName,
-            elementIdentifier: elementId,
-            elementType: elementType,
-            elementLabel: elementLabel,
-            coordinates: coordinates
-        )
-
-        logEvent(
-            name: "user_\(interaction)",
-            category: .user,
-            viewContext: viewContext
-        )
-    }
-
-    func logNavigation(
-        from: String?,
-        to: String,
-        method: NavigationMethod = .unknown,
-        deepLink: String? = nil
-    ) {
-        JourneyManager.shared?.trackScreenTransition(
-            from: from,
-            to: to,
-            method: method,
-            deepLink: deepLink
-        )
-    }
-
-    func logScreenAppeared(_ screenName: String) {
-        JourneyManager.shared?.trackScreenAppeared(screenName)
-    }
-
-    func logScreenDisappeared(_ screenName: String) {
-        JourneyManager.shared?.trackScreenDisappeared(screenName)
-    }
-
-    func logNetworkRequest(
-        url: String,
-        method: String,
-        statusCode: Int? = nil,
-        duration: TimeInterval? = nil,
-        payloadSize: Int? = nil
-    ) {
-        var attributes: [String: Any] = [
-            "url": url,
-            "method": method
-        ]
-
-        if let statusCode = statusCode {
-            attributes["status_code"] = statusCode
-        }
-        if let duration = duration {
-            attributes["duration"] = duration
-        }
-        if let payloadSize = payloadSize {
-            attributes["payload_size"] = payloadSize
-        }
-
-        logEvent(name: "network_request", category: .functional, attributes: attributes)
-    }
-
-    func logError(_ error: Error, context: String? = nil) {
-        var attributes: [String: Any] = [
-            "error_description": error.localizedDescription,
-            "error_type": String(describing: type(of: error))
-        ]
-
-        if let context = context {
-            attributes["context"] = context
-        }
-
-        logEvent(name: "error", category: .system, attributes: attributes)
-    }
-
-    // MARK: - User Context
-
-    func setUserContext(userId: String, segment: String? = nil) {
-        // Log user identification event with user context
-        UnisightTelemetry.shared.logEvent(
-            name: "user_identified",
-            category: .user,
-            attributes: [
-                "user_id": userId,
-                "user_segment": segment ?? "unknown"
-            ]
-        )
-    }
-    
-    // MARK: - Testing Methods
-    
-    func forceMetricExport() {
-        guard isInitialized else {
-            print("⚠️ Telemetry not initialized")
-            return
-        }
+        // Record various types of metrics
+        recordMetric(name: "screen_loaded", value: 1.0)
+        recordMetric(name: "product_viewed", value: 1.0)
+        recordMetric(name: "settings_accessed", value: 1.0)
+        recordMetric(name: "button_clicked", value: 1.0)
+        recordMetric(name: "api_call_duration", value: 150.0)
+        recordMetric(name: "memory_usage", value: 45.2)
+        recordMetric(name: "battery_level", value: 0.75)
         
+        print("[TelemetryService] Test metrics recorded")
+    }
+    
+    /// Force export of current metrics
+    public func forceMetricExport() {
+        print("[TelemetryService] Forcing metric export")
         UnisightTelemetry.shared.forceMetricExport()
-        print("✅ Forced metric export triggered")
-    }
-    
-    func recordTestMetrics() {
-        guard isInitialized else {
-            print("⚠️ Telemetry not initialized")
-            return
-        }
-        
-        // Record some test metrics with actual values
-        UnisightTelemetry.shared.recordMetric(name: "test_counter", value: 1.0)
-        UnisightTelemetry.shared.recordMetric(name: "test_gauge", value: 42.5)
-        UnisightTelemetry.shared.recordMetric(name: "test_histogram", value: 100.0)
-        UnisightTelemetry.shared.recordMetric(name: "user_interaction_count", value: 15.0)
-        UnisightTelemetry.shared.recordMetric(name: "app_performance_score", value: 95.7)
-        
-        print("✅ Test metrics recorded")
     }
 }

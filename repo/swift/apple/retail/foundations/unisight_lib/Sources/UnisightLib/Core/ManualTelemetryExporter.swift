@@ -49,156 +49,129 @@ public class BypassSSLCertificateURLSessionDelegate: NSObject, URLSessionDelegat
     }
 }
 
-/// Updated telemetry exporter using the official OpenTelemetry Swift SDK
-/// This version uses the proper OTLP exporters from the SDK
+/// Custom telemetry exporter that sends OTLP data over HTTP
+/// Implements both SpanExporter and MetricExporter protocols
 public class ManualTelemetryExporter: SpanExporter, MetricExporter {
-
-    // MARK: - Properties
+    
     private let endpoint: String
     private let headers: [String: String]
-    private let session: URLSession
-
-    // MARK: - Initialization
+    private let bypassSSL: Bool
+    
     public init(endpoint: String, headers: [String: String] = [:], bypassSSL: Bool = false) {
         self.endpoint = endpoint
         self.headers = headers
-
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 60
-
-        self.session = bypassSSL ?
-            URLSession(configuration: config, delegate: BypassSSLCertificateURLSessionDelegate(), delegateQueue: nil) :
-            URLSession(configuration: config)
+        self.bypassSSL = bypassSSL
     }
-
-    // MARK: - SpanExporter Protocol
+    
+    // MARK: - SpanExporter Implementation
+    
     public func export(spans: [SpanData]) -> SpanExporterResultCode {
-        // Use the official OTLP exporter for spans
-        return sendOTLPRequest(spans: spans, type: "traces")
+        print("[ManualTelemetryExporter] Exporting \(spans.count) spans")
+        
+        // For now, we'll use the minimal OTLP request for spans
+        // In a full implementation, you'd encode the actual span data
+        let request = MinimalOTLPEncoder.createMinimalOTLPRequest()
+        
+        return sendOTLPRequest(request: request, type: "spans")
     }
-
-    public func export(spans: [SpanData], explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
-        return export(spans: spans)
-    }
-
+    
     public func flush() -> SpanExporterResultCode {
+        print("[ManualTelemetryExporter] Flushing spans")
         return .success
     }
-
-    public func flush(explicitTimeout: TimeInterval?) -> SpanExporterResultCode {
-        return flush()
+    
+    public func shutdown() {
+        print("[ManualTelemetryExporter] Shutting down span exporter")
     }
-
-     public func shutdown() {
-           session.invalidateAndCancel()
-       }
-
-       public func shutdown(explicitTimeout: TimeInterval?) {
-           (self as SpanExporter).shutdown()
-       }
-
-    // MARK: - MetricExporter Protocol
-    public func export(metrics: [Metric]) -> MetricExporterResultCode {
-        print("[UnisightLib] Exporting \(metrics.count) metrics using official OTLP exporter")
+    
+    // MARK: - MetricExporter Implementation
+    
+    public func export(metrics: [StableMetricData]) -> MetricExporterResultCode {
+        print("[ManualTelemetryExporter] Exporting \(metrics.count) metrics")
         
-        // Use the official OTLP exporter for metrics
-        let result = sendOTLPRequest(metrics: metrics, type: "metrics")
-        
-        switch result {
-        case .success:
-            print("[UnisightLib] Export successful")
-        case .failure:
-            print("[UnisightLib] Export failed")
+        if metrics.isEmpty {
+            print("[ManualTelemetryExporter] No metrics to export, using test metric")
+            let request = MinimalOTLPEncoder.createMinimalOTLPRequest()
+            return sendOTLPRequest(request: request, type: "metrics")
+        } else {
+            print("[ManualTelemetryExporter] Using actual metrics for export")
+            let request = MinimalOTLPEncoder.createOTLPRequestFromMetrics(metrics)
+            return sendOTLPRequest(request: request, type: "metrics", metrics: metrics)
         }
-        
-        return result
     }
-
-    public func export(metrics: [Metric], shouldCancel: (() -> Bool)?) -> MetricExporterResultCode {
-        return export(metrics: metrics)
-    }
-
+    
     public func flush() -> MetricExporterResultCode {
+        print("[ManualTelemetryExporter] Flushing metrics")
         return .success
     }
-
-    public func shutdown() -> MetricExporterResultCode {
-        session.invalidateAndCancel()
-        return .success
+    
+    public func shutdown() {
+        print("[ManualTelemetryExporter] Shutting down metric exporter")
     }
-
+    
     // MARK: - Private Methods
-    private func sendOTLPRequest(spans: [SpanData]? = nil, metrics: [Metric]? = nil, type: String) -> SpanExporterResultCode {
-        guard let url = URL(string: "\(endpoint)/otlp/v1/\(type)") else {
-            print("[UnisightLib] Invalid URL: \(endpoint)/otlp/v1/\(type)")
+    
+    private func sendOTLPRequest(request: Data, type: String, metrics: [StableMetricData]? = nil) -> SpanExporterResultCode {
+        guard let url = URL(string: endpoint) else {
+            print("[ManualTelemetryExporter] Invalid endpoint URL: \(endpoint)")
             return .failure
         }
-
-        // Use actual metrics if available, otherwise fall back to test data
-        let protobufData: Data
-        if type == "metrics", let metrics = metrics, !metrics.isEmpty {
-            print("[UnisightLib] Using actual metrics: \(metrics.count) metrics")
-            protobufData = MinimalOTLPEncoder.createOTLPRequestFromMetrics(metrics)
-        } else {
-            print("[UnisightLib] Using test metrics (no actual metrics provided)")
-            protobufData = MinimalOTLPEncoder.createMinimalOTLPRequest()
-        }
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.httpBody = protobufData
-        request.setValue("application/x-protobuf", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/x-protobuf", forHTTPHeaderField: "Accept")
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/x-protobuf", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("\(request.count)", forHTTPHeaderField: "Content-Length")
         
-        print("[UnisightLib] Sending to URL: \(url)")
-        print("[UnisightLib] Content-Length: \(protobufData.count)")
-        print("[UnisightLib] Content-Type: application/x-protobuf")
-        print("[UnisightLib] Request body (first 100 bytes): \(protobufData.prefix(100).map { String(format: "%02x", $0) }.joined())")
-
         // Add custom headers
         for (key, value) in headers {
-            request.setValue(value, forHTTPHeaderField: key)
+            urlRequest.setValue(value, forHTTPHeaderField: key)
         }
-
+        
+        urlRequest.httpBody = request
+        
         let semaphore = DispatchSemaphore(value: 0)
-        var success = false
-
-        let task = session.dataTask(with: request) { data, response, error in
+        var resultCode: SpanExporterResultCode = .failure
+        
+        let task = URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             defer { semaphore.signal() }
-
+            
             if let error = error {
-                print("[UnisightLib] Export error: \(error.localizedDescription)")
+                print("[ManualTelemetryExporter] Network error: \(error)")
+                resultCode = .failure
                 return
             }
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("[UnisightLib] Invalid response type")
-                return
-            }
-
-            success = (200...299).contains(httpResponse.statusCode)
-            if !success {
-                print("[UnisightLib] Export failed with status: \(httpResponse.statusCode)")
-                print("[UnisightLib] Response headers: \(httpResponse.allHeaderFields)")
-                if let data = data, let body = String(data: data, encoding: .utf8) {
-                    print("[UnisightLib] Response body: \(body)")
-                }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("[ManualTelemetryExporter] \(type.capitalized) export response: \(httpResponse.statusCode)")
                 
-                // Additional debugging for 400 errors
-                if httpResponse.statusCode == 400 {
-                    print("[UnisightLib] 400 Bad Request - This usually means the protobuf format is incorrect")
-                    print("[UnisightLib] Check that the OTLP protobuf structure matches the specification")
+                if httpResponse.statusCode == 200 {
+                    print("[ManualTelemetryExporter] ✅ Successfully exported \(type)")
+                    if let metrics = metrics {
+                        print("[ManualTelemetryExporter] Exported \(metrics.count) actual metrics")
+                        for metric in metrics {
+                            print("[ManualTelemetryExporter] - Metric: \(metric.name)")
+                        }
+                    } else {
+                        print("[ManualTelemetryExporter] Exported test metric")
+                    }
+                    resultCode = .success
+                } else {
+                    print("[ManualTelemetryExporter] ❌ Failed to export \(type): HTTP \(httpResponse.statusCode)")
+                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                        print("[ManualTelemetryExporter] Response body: \(responseString)")
+                    }
+                    resultCode = .failure
                 }
             } else {
-                print("[UnisightLib] Export successful with status: \(httpResponse.statusCode)")
+                print("[ManualTelemetryExporter] Invalid response type")
+                resultCode = .failure
             }
         }
-
+        
         task.resume()
         semaphore.wait()
-
-        return success ? .success : .failure
+        
+        return resultCode
     }
 }
 
