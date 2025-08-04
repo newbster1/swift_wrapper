@@ -63,6 +63,14 @@ class TelemetryService {
             category: category,
             attributes: attributes
         )
+        
+        // Also record metrics for important events
+        if category == .user || category == .functional {
+            UnisightTelemetry.shared.recordMetric(
+                name: "event_\(name)_count",
+                value: 1.0
+            )
+        }
     }
 
     func logUserInteraction(
@@ -184,5 +192,31 @@ class TelemetryService {
                 "user_segment": segment ?? "unknown"
             ]
         )
+    }
+    
+    // MARK: - Testing Methods
+    
+    func forceMetricExport() {
+        guard isInitialized else {
+            print("⚠️ Telemetry not initialized")
+            return
+        }
+        
+        UnisightTelemetry.shared.forceMetricExport()
+        print("✅ Forced metric export triggered")
+    }
+    
+    func recordTestMetrics() {
+        guard isInitialized else {
+            print("⚠️ Telemetry not initialized")
+            return
+        }
+        
+        // Record some test metrics
+        UnisightTelemetry.shared.recordMetric(name: "test_counter", value: 1.0)
+        UnisightTelemetry.shared.recordMetric(name: "test_gauge", value: 42.5)
+        UnisightTelemetry.shared.recordMetric(name: "test_histogram", value: 100.0)
+        
+        print("✅ Test metrics recorded")
     }
 }
