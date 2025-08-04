@@ -9,10 +9,10 @@ import ResourceExtension
 /// Main telemetry wrapper for iOS applications
 /// Provides comprehensive journey tracking and observability features
 public class UnisightTelemetry {
-    
+
     // MARK: - Singleton
     public static let shared = UnisightTelemetry()
-    
+
     // MARK: - Properties
     private var isInitialized = false
     private var tracer: Tracer!
@@ -20,16 +20,17 @@ public class UnisightTelemetry {
     private var meter: Meter!
     private var loggerProvider: LoggerProvider!
     private var logger: Logger!
-    
+    private var metricProcessor: MetricProcessor!
+
     private var sessionId: String = UUID().uuidString
     private var configuration: UnisightConfiguration!
     private var journeyManager: JourneyManager!
     private var eventProcessor: EventProcessor!
     private var telemetryExporter: ManualTelemetryExporter!
-    
+
     // MARK: - Initialization
     private init() {}
-    
+
     /// Initialize the telemetry system with configuration
     /// - Parameter config: Configuration for telemetry behavior
     public func initialize(with config: UnisightConfiguration) throws {
@@ -37,9 +38,9 @@ public class UnisightTelemetry {
             print("UnisightTelemetry is already initialized")
             return
         }
-        
+
         self.configuration = config
-        
+
         // Initialize custom components first
         self.journeyManager = JourneyManager(config: config)
         self.eventProcessor = EventProcessor(config: config)
@@ -48,18 +49,18 @@ public class UnisightTelemetry {
             headers: config.headers,
             bypassSSL: config.environment == "development" // Enable SSL bypass for development
         )
-        
+
         // Initialize OpenTelemetry components
         try setupOpenTelemetry()
-        
+
         // Setup automatic instrumentation
         setupAutomaticInstrumentation()
-        
+
         // Start system monitoring
         startSystemMonitoring()
-        
+
         isInitialized = true
-        
+
         // Log initialization
         logEvent(
             name: "telemetry_initialized",
@@ -70,8 +71,12 @@ public class UnisightTelemetry {
                 "version": config.version
             ]
         )
+
+        // Record initialization metrics
+        recordMetric(name: "telemetry_initialization_count", value: 1.0)
+        recordMetric(name: "app_startup_time", value: Date().timeIntervalSince1970)
     }
-    
+
     private func setupOpenTelemetry() throws {
         // Create resource
         let resource = Resource(
@@ -86,7 +91,7 @@ public class UnisightTelemetry {
                 "app.version": AttributeValue.string(DeviceInfo.appVersion)
             ]
         )
-        
+
         // Setup tracer provider
         let spanProcessor: SpanProcessor
         if configuration.usesBatchProcessor {
@@ -94,45 +99,52 @@ public class UnisightTelemetry {
         } else {
             spanProcessor = SimpleSpanProcessor(spanExporter: telemetryExporter)
         }
-        
+
         let tracerProvider = TracerProviderBuilder()
             .add(spanProcessor: spanProcessor)
             .with(resource: resource)
             .build()
-        
+
         OpenTelemetry.registerTracerProvider(tracerProvider: tracerProvider)
-        
+
         self.tracer = tracerProvider.get(
             instrumentationName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
+
+        // Setup meter provider with metric processor
+        if configuration.usesBatchProcessor {
+            self.metricProcessor = BatchMetricProcessor(metricExporter: telemetryExporter)
+        } else {
+            self.metricProcessor = SimpleMetricProcessor(metricExporter: telemetryExporter)
+        }
         
-        // Setup meter provider (simplified for now)
         self.meterProvider = MeterProviderBuilder()
+            .add(metricProcessor: self.metricProcessor)
             .with(resource: resource)
             .build()
-        
+
         OpenTelemetry.registerMeterProvider(meterProvider: meterProvider)
-        
+
         self.meter = meterProvider.get(
             instrumentationName: "UnisightTelemetry",
             instrumentationVersion: "1.0.0"
         )
-        
+
         // Setup logger provider (simplified for now)
         self.loggerProvider = LoggerProviderBuilder()
             .with(resource: resource)
             .build()
-        
+
         OpenTelemetry.registerLoggerProvider(loggerProvider: loggerProvider)
-        
+
         self.logger = loggerProvider.get(
             instrumentationScopeName: "UnisightTelemetry"
         )
     }
-    
+
     private func setupAutomaticInstrumentation() {
-                // Setup URLSession instrumentation (commented out if not available)
+        // Setup URLSession instrumentation (commented out if not available)
         // let urlSessionConfig = URLSessionInstrumentationConfiguration(
         //     shouldRecordPayload: { _ in self.configuration.shouldRecordPayloads },
         //     shouldInstrument: { request in
@@ -147,7 +159,7 @@ public class UnisightTelemetry {
         // Initialize URLSession instrumentation
         // _ = URLSessionInstrumentation(configuration: urlSessionConfig)
     }
-    
+
     private func startSystemMonitoring() {
         // Monitor app lifecycle events
         NotificationCenter.default.addObserver(
@@ -156,14 +168,14 @@ public class UnisightTelemetry {
             name: UIApplication.didEnterBackgroundNotification,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appWillEnterForeground),
             name: UIApplication.willEnterForegroundNotification,
             object: nil
         )
-        
+
         // Monitor battery level changes
         if configuration.events.contains(.system(.battery(0.1))) {
             UIDevice.current.isBatteryMonitoringEnabled = true
@@ -174,7 +186,7 @@ public class UnisightTelemetry {
                 object: nil
             )
         }
-        
+
         // Monitor accessibility changes
         if configuration.events.contains(.system(.accessibilityChange)) {
             NotificationCenter.default.addObserver(
@@ -185,21 +197,25 @@ public class UnisightTelemetry {
             )
         }
     }
-    
+
     // MARK: - Public API
-    
+
     /// Start a new session
     public func startNewSession() {
         sessionId = UUID().uuidString
         journeyManager.startNewSession(sessionId: sessionId)
-        
+
         logEvent(
             name: "session_started",
             category: .system,
             attributes: ["session_id": sessionId]
         )
+
+        // Record session metrics
+        recordMetric(name: "session_start_count", value: 1.0)
+        recordMetric(name: "session_id_hash", value: Double(sessionId.hashValue))
     }
-    
+
     /// Log a custom event
     public func logEvent(
         name: String,
@@ -214,10 +230,10 @@ public class UnisightTelemetry {
             timestamp: timestamp,
             sessionId: sessionId
         )
-        
+
         eventProcessor.process(event: event)
     }
-    
+
     /// Create a span for tracing
     public func createSpan(
         name: String,
@@ -226,18 +242,18 @@ public class UnisightTelemetry {
     ) -> Span {
         let spanBuilder = tracer.spanBuilder(spanName: name)
             .setSpanKind(spanKind: kind)
-        
+
         // Add common attributes
         spanBuilder.setAttribute(key: "session.id", value: sessionId)
-        
+
         // Add custom attributes
         for (key, value) in attributes {
             spanBuilder.setAttribute(key: key, value: AttributeValue.fromAny(value))
         }
-        
+
         return spanBuilder.startSpan()
     }
-    
+
     /// Record a metric
     public func recordMetric(
         name: String,
@@ -247,45 +263,62 @@ public class UnisightTelemetry {
         let counter = meter.createDoubleCounter(name: name)
         counter.add(value: value, labels: labels)
     }
-    
+
     /// Get the current tracer
     public func getTracer() -> Tracer {
         return tracer
     }
-    
+
     /// Get the current meter
     public func getMeter() -> Meter {
         return meter
     }
-    
+
     /// Get the current logger
     public func getLogger() -> Logger {
         return logger
     }
-    
+
     /// Get the journey manager for advanced journey tracking
     public func getJourneyManager() -> JourneyManager {
         return journeyManager
     }
-    
+
+    /// Force export of current metrics (for testing)
+    public func forceMetricExport() {
+        guard isInitialized else {
+            print("[UnisightLib] Telemetry not initialized")
+            return
+        }
+        print("[UnisightLib] Forced metric export triggered")
+        _ = metricProcessor.forceFlush()
+    }
+
     // MARK: - System Event Handlers
-    
+
     @objc private func appDidEnterBackground() {
         logEvent(
             name: "app_background",
             category: .system,
             attributes: ["previous_state": "foreground"]
         )
+
+        // Record metrics
+        recordMetric(name: "app_background_count", value: 1.0)
+        recordMetric(name: "session_duration", value: Date().timeIntervalSince1970)
     }
-    
+
     @objc private func appWillEnterForeground() {
         logEvent(
             name: "app_foreground",
             category: .system,
             attributes: ["previous_state": "background"]
         )
+
+        // Record metrics
+        recordMetric(name: "app_foreground_count", value: 1.0)
     }
-    
+
     @objc private func batteryLevelChanged() {
         let batteryLevel = UIDevice.current.batteryLevel
         logEvent(
@@ -293,8 +326,11 @@ public class UnisightTelemetry {
             category: .system,
             attributes: ["battery_level": batteryLevel]
         )
+
+        // Record battery level as a gauge metric
+        recordMetric(name: "battery_level_gauge", value: Double(batteryLevel))
     }
-    
+
     @objc private func accessibilityChanged() {
         logEvent(
             name: "accessibility_changed",
@@ -306,13 +342,11 @@ public class UnisightTelemetry {
             ]
         )
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 }
-
-
 
 // MARK: - AttributeValue Extension
 extension AttributeValue {

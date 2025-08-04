@@ -42,6 +42,17 @@ struct SettingsView: View {
                         )
                     }
                     .foregroundColor(.blue)
+                    
+                    Button("Test Actual Metrics") {
+                        TelemetryService.shared.recordTestMetrics()
+                        TelemetryService.shared.forceMetricExport()
+                        TelemetryService.shared.logUserInteraction(
+                            .tap,
+                            viewName: "Settings",
+                            elementId: "test_metrics_button"
+                        )
+                    }
+                    .foregroundColor(.green)
                 }
                 
                 // App Preferences

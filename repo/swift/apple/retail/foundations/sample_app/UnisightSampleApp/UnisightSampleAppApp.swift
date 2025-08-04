@@ -32,6 +32,10 @@ struct UnisightSampleAppApp: App {
                         category: .system,
                         attributes: attributes
                     )
+                    
+                    // Record app launch metrics
+                    UnisightTelemetry.shared.recordMetric(name: "app_launch_count", value: 1.0)
+                    UnisightTelemetry.shared.recordMetric(name: "app_launch_timestamp", value: Date().timeIntervalSince1970)
 
                     UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
                 }
