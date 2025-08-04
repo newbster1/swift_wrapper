@@ -487,6 +487,11 @@ struct MinimalOTLPEncoder {
     // Helper method to extract metric value
     // This is a simplified implementation - in practice, you'd need to access the metric's data
     private static func extractMetricValue(from metric: Metric) -> Double {
+        // Check if it's our SimpleMetric implementation
+        if let simpleMetric = metric as? SimpleMetric {
+            return simpleMetric.value
+        }
+        
         // For now, return a default value based on the metric name
         // In a real implementation, you would access the metric's actual data points
         switch metric.name {

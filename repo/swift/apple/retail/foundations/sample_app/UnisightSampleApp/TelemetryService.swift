@@ -212,10 +212,12 @@ class TelemetryService {
             return
         }
         
-        // Record some test metrics
+        // Record some test metrics with actual values
         UnisightTelemetry.shared.recordMetric(name: "test_counter", value: 1.0)
         UnisightTelemetry.shared.recordMetric(name: "test_gauge", value: 42.5)
         UnisightTelemetry.shared.recordMetric(name: "test_histogram", value: 100.0)
+        UnisightTelemetry.shared.recordMetric(name: "user_interaction_count", value: 15.0)
+        UnisightTelemetry.shared.recordMetric(name: "app_performance_score", value: 95.7)
         
         print("✅ Test metrics recorded")
     }

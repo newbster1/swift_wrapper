@@ -111,8 +111,7 @@ public class UnisightTelemetry {
             instrumentationVersion: "1.0.0"
         )
         
-        // Setup meter provider with metric exporter
-        // For now, use a simple setup without custom processors
+        // Setup meter provider (simplified for now)
         self.meterProvider = MeterProviderBuilder()
             .with(resource: resource)
             .build()
@@ -255,6 +254,18 @@ public class UnisightTelemetry {
     ) {
         let counter = meter.createDoubleCounter(name: name)
         counter.add(value: value, labels: labels)
+        
+        // Manually trigger export with actual metrics
+        // Create a simple metric structure that our exporter can handle
+        let metricData = createSimpleMetricData(name: name, value: value, labels: labels)
+        telemetryExporter.export(metrics: [metricData])
+    }
+    
+    /// Create a simple metric data structure for manual export
+    private func createSimpleMetricData(name: String, value: Double, labels: [String: String]) -> Metric {
+        // Create a simple metric that our exporter can handle
+        // This is a simplified approach - in production you'd use the actual SDK metrics
+        return SimpleMetric(name: name, value: value, labels: labels)
     }
     
     /// Get the current tracer
@@ -284,12 +295,16 @@ public class UnisightTelemetry {
             return
         }
         
-        // For now, just log that we would export metrics
-        // In a real implementation, you would trigger the metric processor
         print("[UnisightLib] Forced metric export triggered")
         
-        // Record a test metric to ensure metrics are being created
-        recordMetric(name: "forced_export_test", value: 1.0)
+        // Create and export some test metrics directly
+        let testMetrics = [
+            SimpleMetric(name: "forced_export_test", value: 1.0, labels: [:]),
+            SimpleMetric(name: "test_counter_manual", value: 5.0, labels: [:]),
+            SimpleMetric(name: "test_gauge_manual", value: 42.5, labels: [:])
+        ]
+        
+        telemetryExporter.export(metrics: testMetrics)
     }
     
     // MARK: - System Event Handlers
@@ -347,6 +362,27 @@ public class UnisightTelemetry {
 }
 
 
+
+// MARK: - Simple Metric Implementation
+public class SimpleMetric: Metric {
+    public let name: String
+    public let value: Double
+    public let labels: [String: String]
+    
+    public init(name: String, value: Double, labels: [String: String]) {
+        self.name = name
+        self.value = value
+        self.labels = labels
+    }
+    
+    public var description: String? {
+        return "Simple metric: \(name)"
+    }
+    
+    public var unit: String? {
+        return nil
+    }
+}
 
 // MARK: - AttributeValue Extension
 extension AttributeValue {

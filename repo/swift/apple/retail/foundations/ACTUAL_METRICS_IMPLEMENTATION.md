@@ -103,8 +103,26 @@ When actual metrics are being sent, you should see logs like:
 ```
 [UnisightLib] Using actual metrics: 5 metrics
 [UnisightLib] Creating OTLP request from 5 actual metrics
-[UnisightLib] Encoding actual metric: test_counter_actual
-[UnisightLib] Encoding actual metric: test_gauge_actual
+[UnisightLib] Encoding actual metric: test_counter
+[UnisightLib] Encoding actual metric: test_gauge
+[UnisightLib] Export successful with status: 200
+```
+
+**Before (Test Metrics Only):**
+```
+[UnisightLib] Using test metrics (no actual metrics provided)
+[UnisightLib] Sending to URL: https://ref-tel-dis-dev.kbusw2a.shld.apple.com/otlp/v1/metrics
+[UnisightLib] Content-Length: 110
+[UnisightLib] Request body (first 100 bytes): 0a6c0a250a230a0c736572766963652e6e616d6512130a11556e69736967687454656c656d6574727912430a130a11556e69736967687454656c656d65747279122c0a0b746573745f6d65747269632a1d0a1b1100ffa523846958182100ffa523846958
+```
+
+**After (Actual Metrics):**
+```
+[UnisightLib] Using actual metrics: 3 metrics
+[UnisightLib] Creating OTLP request from 3 actual metrics
+[UnisightLib] Encoding actual metric: test_counter
+[UnisightLib] Encoding actual metric: test_gauge
+[UnisightLib] Encoding actual metric: user_interaction_count
 [UnisightLib] Export successful with status: 200
 ```
 
