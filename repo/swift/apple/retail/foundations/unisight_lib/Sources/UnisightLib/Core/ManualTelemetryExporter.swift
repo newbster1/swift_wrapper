@@ -90,13 +90,13 @@ public class ManualTelemetryExporter: SpanExporter, MetricExporter {
         return flush()
     }
 
-     public func shutdown() {
-           session.invalidateAndCancel()
-       }
+    public func shutdown() {
+        session.invalidateAndCancel()
+    }
 
-       public func shutdown(explicitTimeout: TimeInterval?) {
-           (self as SpanExporter).shutdown()
-       }
+    public func shutdown(explicitTimeout: TimeInterval?) {
+        shutdown()
+    }
 
     // MARK: - MetricExporter Protocol
     public func export(metrics: [Metric]) -> MetricExporterResultCode {
